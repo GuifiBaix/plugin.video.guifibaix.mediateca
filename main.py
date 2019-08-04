@@ -1,77 +1,88 @@
 # -*- coding: utf-8 -*-
-# Module: default
-# Author: Roman V. M.
-# Created on: 28.11.2014
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 """
-Example video plugin that is compatible with both Python 2 and 3
+Guifibaix Mediateca  plugin
 
-Compatibility features are provided by ``script.module.future`` library addon.
 """
 
-# Enable unicode strings by default as in Python 3
+# Python 2 compatibility, remove when unneeded
 from __future__ import unicode_literals
-# Monkey-patch standard libary names to enable Python 3-like behavior
 from future import standard_library
 standard_library.install_aliases()
-from future.utils import iterkeys
-# The above strings provide compatibility layer for Python 2
-# so the code can work in both versions.
-# In Python 3 they do nothing and can be safely removed.
-# Normal imports for your addon:
+
 import sys
-from urllib.parse import urlencode, parse_qsl
+import os
+import re
+try:
+    from urllib.parse import urlencode, parse_qsl, quote
+except ImportError:
+    from urllib import urlencode
+    from urlparse import parse_qsl, quote
 import xbmcgui
 import xbmcplugin
+import xbmcaddon
+import mechanize
+
+def u(text):
+    if type(text)==type(u''): return text
+    if type(text)==type(b''): return text.decode('utf8')
+    return type('u')(text)
+
+def b(text):
+    if type(text)==type(b''): return text
+    if type(text)==type(u''): return text.encode('utf8')
+    return type('u')(text).encode('utf8')
+
+def _(text, *args, **kwds):
+    # TODO: translate
+    return u(text).format(*args, **kwds)
+
+def dumphash(content):
+    return
+    import hashlib
+    import io
+    md5 = hashlib.sha1()
+    md5.update(b(content))
+    filename = u'dump_{}.html'.format(md5.hexdigest())
+    with io.open(filename, 'w', encoding='utf8') as f:
+        f.write(content)
+    return filename
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
 
-# Free sample videos are provided by www.vidsplay.com
-# Here we use a fixed set of properties simply for demonstrating purposes
-# In a "real life" plugin you will need to get info and links to video files/streams
-# from some web-site or online service.
-VIDEOS = {'Animals': [{'name': 'Crab',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4',
-                       'genre': 'Animals'},
-                      {'name': 'Alligator',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/alligator-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/alligator.mp4',
-                       'genre': 'Animals'},
-                      {'name': 'Turtle',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/turtle-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/turtle.mp4',
-                       'genre': 'Animals'}
-                      ],
-            'Cars': [{'name': 'Postal Truck',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/us_postal-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/us_postal.mp4',
-                      'genre': 'Cars'},
-                     {'name': 'Traffic',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic1-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic1.mp4',
-                      'genre': 'Cars'},
-                     {'name': 'Traffic Arrows',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic_arrows-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic_arrows.mp4',
-                      'genre': 'Cars'}
-                     ],
-            'Food': [{'name': 'Chicken',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/bbq_chicken-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/bbqchicken.mp4',
-                      'genre': 'Food'},
-                     {'name': 'Hamburger',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/hamburger-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/hamburger.mp4',
-                      'genre': 'Food'},
-                     {'name': 'Pizza',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/pizza-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/pizza.mp4',
-                      'genre': 'Food'}
-                     ]}
+addon = xbmcaddon.Addon()
+addonID = addon.getAddonInfo('id')
+addonFolder = u(xbmc.translatePath('special://home/addons/'+addonID))
+addonUserDataFolder = u(xbmc.translatePath("special://profile/addon_data/"+addonID))
+urlMain = addon.getSetting('baseurl')
+cookieFile = os.path.join(addonUserDataFolder, "mediateca.cookies")
+
+icon = os.path.join(addonFolder, "icon.png")
+def notify(message):
+    xbmc.executebuiltin(b(u('XBMC.Notification(Info:,'+message+',2000,'+icon+')')))
+def startBusy():
+    xbmc.executebuiltin('ActivateWindow(busydialog)')
+def endBusy():
+    xbmc.executebuiltin('Dialog.Close(busydialog)')
+def log(msg, level=xbmc.LOGNOTICE):
+    # xbmc.log('%s: %s' % (addonID, msg), level)
+    log_message = u'{0}: [{2}] {1}'.format(addonID, msg, _handle)
+    xbmc.log(b(log_message), level)
+    """
+    xbmc.LOGDEBUG = 0
+    xbmc.LOGERROR = 4
+    xbmc.LOGFATAL = 6
+    xbmc.LOGINFO = 1
+    xbmc.LOGNONE = 7
+    xbmc.LOGNOTICE = 2
+    xbmc.LOGSEVERE = 5
+    xbmc.LOGWARNING = 3
+    """
+
+log('\nRun {}'.format(" ".join(sys.argv)))
 
 
 def get_url(**kwargs):
@@ -85,128 +96,289 @@ def get_url(**kwargs):
     return '{0}?{1}'.format(_url, urlencode(kwargs))
 
 
-def get_categories():
-    """
-    Get the list of video categories.
+import cookielib
+import urllib2
+cookiejar = cookielib.MozillaCookieJar()
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
+userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2566.0 Safari/537.36"
+opener.addheaders = [('User-agent', userAgent)]
 
-    Here you can insert some parsing code that retrieves
-    the list of video categories (e.g. 'Movies', 'TV-shows', 'Documentaries' etc.)
-    from some site or server.
+def getUnicodePage(url):
+    print url
+    req = opener.open(url)
+    content = ""
+    encoding = 'utf-8'
+    if "content-type" in req.headers and "charset=" in req.headers['content-type']:
+        encoding=req.headers['content-type'].split('charset=')[-1]
+    content = unicode(req.read(), encoding)
+    return content
 
-    .. note:: Consider using `generator functions <https://wiki.python.org/moin/Generators>`_
-        instead of returning lists.
+def deleteCookies():
+    if os.path.exists(cookieFile):
+        os.remove(cookieFile)
 
-    :return: The list of video categories
-    :rtype: types.GeneratorType
-    """
-    return iterkeys(VIDEOS)
+def requestPassword():
+    password = ''
+    keyboard = xbmc.Keyboard('', _("Password:"), True)
+    keyboard.setHiddenInput(True)
+    keyboard.doModal()
+    if keyboard.isConfirmed() and keyboard.getText():
+        password = keyboard.getText()
+    return password and u(password)
+
+def requestUsername(username=None):
+    keyboard = xbmc.Keyboard(username or '', _('GuifiBaix user name'))
+    keyboard.doModal()
+    if keyboard.isConfirmed() and u(keyboard.getText()):
+        return u(keyboard.getText())
+
+def retrieveOrAskAuth():
+    username = addon.getSetting('username')
+    password = addon.getSetting('password')
+
+    if not username or not password:
+        username = requestUsername(username)
+
+    if password:
+        password = u(password)
+
+    if not password:
+        password = requestPassword()
+
+    return username, password
+
+def login(retry=False):
+    def isAuth(content):
+        return '_auth.php' in content
+
+    def successFullLogin(content):
+        return '_logoff.php' in content
+    log("Ensuring login")
+
+    br = mechanize.Browser()
+    br.set_cookiejar(cookiejar)
+    br.set_handle_gzip(True)
+    br.set_handle_robots(False)
+    br.addheaders = [('User-Agent', userAgent)]
+
+    br.open(urlMain)
+    content = u(br.response().read())
+    log("Session check at {} {}".format(br.geturl(), dumphash(content)))
+    if successFullLogin(content):
+        log("Guifibaix: Already logged in")
+        return br
+
+    if not isAuth(content):
+        log("pantalla rara")
+        if retry:
+            notify("Unable to login")
+            return None
+        notify("Reseting session")
+        deleteCookies()
+        return login(retry=True)
+
+    log("Auth required")
+
+    username, password = retrieveOrAskAuth()
+    if not password: return br
+
+    br.select_form(action="_auth.php")
+    br["username"] = username
+    br["password"] = password
+    br.addheaders = [
+        ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
+        ('Accept-Encoding', 'gzip, deflate'),
+        ('Accept-Language', 'en-US;q=0.7,en;q=0.3'),
+        ('Cache-Control', 'no-cache'),
+        ('Connection', 'keep-alive'),
+        ('Content-Type', 'application/x-www-form-urlencoded'),
+        ('User-Agent', userAgent),
+        ('Upgrade-Insecure-Requests', '1'),
+    ]
+    startBusy()
+    br.submit()
+    content = u(br.response().read())
+    log("Auth resulted in {} {}".format(br.geturl(), dumphash(content)))
+    endBusy()
+
+    addon.setSetting('username', username)
+    addon.setSetting('access', 'trying')
+
+    if not successFullLogin(content):
+        log(content)
+        log("Failed login")
+        notify("Login failed")
+        return None
+
+    addon.setSetting('password', password)
+    addon.setSetting('access', 'success')
+
+    cookiejar.save(cookieFile, ignore_discard=True, ignore_expires=True)
+
+    return br
 
 
-def get_videos(category):
-    """
-    Get the list of videofiles/streams.
-
-    Here you can insert some parsing code that retrieves
-    the list of video streams in the given category from some site or server.
-
-    .. note:: Consider using `generators functions <https://wiki.python.org/moin/Generators>`_
-        instead of returning lists.
-
-    :param category: Category name
-    :type category: str
-    :return: the list of videos in the category
-    :rtype: list
-    """
-    return VIDEOS[category]
-
-
-def list_categories():
+def series_list():
     """
     Create the list of video categories in the Kodi interface.
     """
-    # Set plugin category. It is displayed in some skins as the name
-    # of the current section.
-    xbmcplugin.setPluginCategory(_handle, 'My Video Collection')
+    browser = login()
+    browser.open(urlMain+'/api/rest/Series/listaCompleta')
+    import json
+    series = json.loads(browser.response().read())['response']['data']
+    # TODO: Error handling
+
+    # Location step
+    xbmcplugin.setPluginCategory(_handle, 'Series')
     # Set plugin content. It allows Kodi to select appropriate views
     # for this type of content.
     xbmcplugin.setContent(_handle, 'videos')
-    # Get video categories
-    categories = get_categories()
-    # Iterate through categories
-    for category in categories:
+
+    for serie in series:
         # Create a list item with a text label and a thumbnail image.
-        list_item = xbmcgui.ListItem(label=category)
+
+        if serie['Retirada'] == '1': continue
+        if serie['Activo'] != '1': continue
+
+        title = serie['Serie']
+        title_path = quote(b(title.replace("'","")))
+        list_item = xbmcgui.ListItem(label=title)
         # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
         # Here we use the same image for all items for simplicity's sake.
         # In a real-life plugin you need to set each image accordingly.
-        list_item.setArt({'thumb': VIDEOS[category][0]['thumb'],
-                          'icon': VIDEOS[category][0]['thumb'],
-                          'fanart': VIDEOS[category][0]['thumb']})
-        # Set additional info for the list item.
-        # Here we use a category name for both properties for for simplicity's sake.
-        # setInfo allows to set various information for an item.
+        mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
+        if mediaBase != '/Series/' + title_path:
+            log("{} {}".format(title_path, mediaBase))
+        list_item.setArt(dict(
+            poster = urlMain+mediaBase+'/cover.jpg',
+            thumb = urlMain+mediaBase+'/cover.jpg',
+            cover = urlMain+mediaBase+'/cover.jpg',
+            fanart = urlMain+mediaBase+'/fanart.jpg',
+        ))
         # For available properties see the following link:
         # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
         # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-        list_item.setInfo('video', {'title': category,
-                                    'genre': category,
-                                    'mediatype': 'video'})
-        # Create a URL for a plugin recursive call.
-        # Example: plugin://plugin.video.example/?action=listing&category=Animals
-        url = get_url(action='listing', category=category)
+        list_item.setInfo('video', {
+            'title': title,
+            'genre': title,
+            'mediatype': 'video',
+        })
+        url = get_url(action='season_list', serie=serie['IdSerie'])
         # is_folder = True means that this item opens a sub-list of lower level items.
         is_folder = True
         # Add our item to the Kodi virtual folder listing.
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, is_folder)
+        xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
 
 
-def list_videos(category):
-    """
-    Create the list of playable videos in the Kodi interface.
+def season_list(serie):
+    browser = login()
+    browser.open(urlMain+'/api/rest/Serie/temporadasSerie/'+serie)
+    import json
+    seasons = json.loads(browser.response().read())['response']['data']
+    # TODO: Error handling
 
-    :param category: Category name
-    :type category: str
-    """
-    # Set plugin category. It is displayed in some skins as the name
-    # of the current section.
-    xbmcplugin.setPluginCategory(_handle, category)
+    for season in seasons:
+        season_item(season)
+
+    # Location step
+    xbmcplugin.setPluginCategory(_handle, seasons[0]['Serie'])
     # Set plugin content. It allows Kodi to select appropriate views
     # for this type of content.
     xbmcplugin.setContent(_handle, 'videos')
-    # Get the list of videos in the category.
-    videos = get_videos(category)
-    # Iterate through videos.
-    for video in videos:
-        # Create a list item with a text label and a thumbnail image.
-        list_item = xbmcgui.ListItem(label=video['name'])
-        # Set additional info for the list item.
-        # 'mediatype' is needed for skin to display info for this ListItem correctly.
-        list_item.setInfo('video', {'title': video['name'],
-                                    'genre': video['genre'],
-                                    'mediatype': 'video'})
-        # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
-        # Here we use the same image for all items for simplicity's sake.
-        # In a real-life plugin you need to set each image accordingly.
-        list_item.setArt({'thumb': video['thumb'], 'icon': video['thumb'], 'fanart': video['thumb']})
-        # Set 'IsPlayable' property to 'true'.
-        # This is mandatory for playable items!
-        list_item.setProperty('IsPlayable', 'true')
-        # Create a URL for a plugin recursive call.
-        # Example: plugin://plugin.video.example/?action=play&video=http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4
-        url = get_url(action='play', video=video['video'])
-        # Add the list item to a virtual Kodi folder.
-        # is_folder = False means that this item won't open any sub-list.
-        is_folder = False
-        # Add our item to the Kodi virtual folder listing.
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, is_folder)
-    # Add a sort method for the virtual folder items (alphabetically, ignore articles)
+
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
+
+
+def episode_list(serie, season):
+    browser = login()
+    browser.open(urlMain+'/api/rest/Serie/capitulosSerie/'+serie+'/'+season)
+    import json
+    episodes = json.loads(browser.response().read())['response']['data']
+    # TODO: Error handling
+
+    for episode in episodes:
+        episode_item(episode)
+
+    # Location step
+    xbmcplugin.setPluginCategory(_handle, episodes[0]['Serie'])
+    # Set plugin content. It allows Kodi to select appropriate views
+    # for this type of content.
+    xbmcplugin.setContent(_handle, 'videos')
+
+    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+    # Finish creating a virtual folder.
+    xbmcplugin.endOfDirectory(_handle)
+
+def season_item(season):
+    # Create a list season with a text label and a thumbnail image.
+
+    if season['Retirada'] == '1': return None
+    if season['Activo'] != '1': return None
+
+    title = _("Temporada {}", season['Temporada'])
+    mediaBase = quote(b(season['Ruta']))
+
+    list_item = xbmcgui.ListItem(label=title)
+    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list season.
+    # Here we use the same image for all items for simplicity's sake.
+    # In a real-life plugin you need to set each image accordingly.
+    list_item.setArt(dict(
+        poster = urlMain+mediaBase+'/cover.jpg',
+        thumb = urlMain+mediaBase+'/cover.jpg',
+        cover = urlMain+mediaBase+'/cover.jpg',
+        fanart = urlMain+mediaBase+'/fanart.jpg',
+    ))
+    # For available properties see the following link:
+    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
+    list_item.setInfo('video', {
+        'title': title,
+        'genre': title,
+        'mediatype': 'video',
+    })
+    url = get_url(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
+    # is_folder = True means that this season opens a sub-list of lower level items.
+    is_folder = True
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+
+def episode_item(episode):
+    if episode['Retirada'] == '1': return None
+    if episode['Activo'] != '1': return None
+
+    title = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
+    mediaBase = quote(b(episode['Fichero'][:-len('.mp4')]))
+
+    list_item = xbmcgui.ListItem(label=title)
+    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list .
+    # Here we use the same image for all items for simplicity's sake.
+    # In a real-life plugin you need to set each image accordingly.
+    list_item.setArt(dict(
+        poster = urlMain+mediaBase+'.jpg',
+        thumb = urlMain+mediaBase+'.jpg',
+        cover = urlMain+mediaBase+'.jpg',
+    ))
+    # Set additional info for the list item.
+    # 'mediatype' is needed for skin to display info for this ListItem correctly.
+    list_item.setInfo('video', {
+        'title': title,
+        'mediatype': 'video',
+    })
+    # Set 'IsPlayable' property to 'true'.
+    # This is mandatory for playable items!
+    list_item.setProperty('IsPlayable', 'true')
+    url = get_url(action='play', video=urlMain+quote(b(episode['Fichero'])))
+    # Add the list item to a virtual Kodi folder.
+    is_folder = False
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
 
 def play_video(path):
@@ -221,7 +393,6 @@ def play_video(path):
     # Pass the item to the Kodi player.
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
-
 def router(paramstring):
     """
     Router function that calls other functions
@@ -230,17 +401,21 @@ def router(paramstring):
     :param paramstring: URL encoded plugin paramstring
     :type paramstring: str
     """
-    # Parse a URL-encoded paramstring to the dictionary of
-    # {<parameter>: <value>} elements
     params = dict(parse_qsl(paramstring))
     # Check the parameters passed to the plugin
     if params:
-        if params['action'] == 'listing':
-            # Display the list of videos in a provided category.
-            list_videos(params['category'])
-        elif params['action'] == 'play':
+        action = params['action']
+
+        if action == 'season_list':
+            season_list(params['serie'])
+
+        elif action == 'episode_list':
+            episode_list(params['serie'], params['season'])
+
+        elif action == 'play':
             # Play a video from a provided URL.
             play_video(params['video'])
+
         else:
             # If the provided paramstring does not contain a supported action
             # we raise an exception. This helps to catch coding errors,
@@ -249,10 +424,13 @@ def router(paramstring):
     else:
         # If the plugin is called from Kodi UI without any parameters,
         # display the list of video categories
-        list_categories()
+        series_list()
 
 
 if __name__ == '__main__':
     # Call the router function and pass the plugin call parameters to it.
     # We use string slicing to trim the leading '?' from the plugin call paramstring
     router(sys.argv[2][1:])
+
+
+# vim: et

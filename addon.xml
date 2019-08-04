@@ -1,26 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.example"
-version="2.4.0"
-name="Example Kodi Video Plugin"
-provider-name="Roman_V_M">
+<addon id="plugin.video.guifibaix.mediateca"
+version="0.1"
+name="Guifibaix Mediateca"
+provider-name="Guifibaix SCCL">
 <requires>
   <import addon="xbmc.python" version="2.25.0"/>
   <import addon="script.module.future" />
+  <import addon="script.module.mechanize" version="0.4.2"/>
+  <import addon="script.module.requests" version="2.9.1"/>
 </requires>
 <extension point="xbmc.python.pluginsource" library="main.py">
   <provides>video</provides>
 </extension>
 <extension point="xbmc.addon.metadata">
-  <summary lang="en">Example Kodi Video Plugin</summary>
-  <description lang="en_GB">An example video plugin for Kodi mediacenter.</description>
-  <disclaimer lang="en_GB">Free sample videos are provided by www.vidsplay.com.</disclaimer>
+  <summary lang="es">Guifibaix Mediateca</summary>
+  <description lang="es">La Mediateca colaborativa de la red GuifiBaix.</description>
+  <disclaimer lang="es">Los contenidos los ofrecen otros usuarios de la red Guifi.net como tú</disclaimer>
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
     <screenshot>resources\screenshot-01.jpg</screenshot>
     <screenshot>resources\screenshot-02.jpg</screenshot>
     <screenshot>resources\screenshot-03.jpg</screenshot>    
+    <language>resources/language/en/strings.xml</language>
   </assets>
-  <news>Updated with latest artwork metadata</news>
+  <news>Primera versió</news>
 </extension>
 </addon>
