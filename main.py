@@ -153,15 +153,18 @@ def login(retry=False):
 
     return session
 
+def api(url):
+    session=login()
+    response = session.get(urlMain+'/api/rest/'+url).json()
+    # TODO: Error handling
+    return response['response']['data']
+
 
 def series_list():
     """
-    Create the list of video categories in the Kodi interface.
+    List of series
     """
-    browser = login()
-    response = browser.get(urlMain+'/api/rest/Series/listaCompleta').json()
-    series = response['response']['data']
-    # TODO: Error handling
+    series = api('Series/listaCompleta')
 
     # Location step
     xbmcplugin.setPluginCategory(_handle, 'Series')
@@ -211,10 +214,7 @@ def series_list():
 
 
 def season_list(serie):
-    browser = login()
-    response = browser.get(urlMain+'/api/rest/Serie/temporadasSerie/'+serie).json()
-    seasons = response['response']['data']
-    # TODO: Error handling
+    seasons = api('Serie/temporadasSerie/'+serie)
 
     for season in seasons:
         season_item(season)
@@ -230,10 +230,7 @@ def season_list(serie):
     xbmcplugin.endOfDirectory(_handle)
 
 def episode_list(serie, season):
-    browser = login()
-    response = browser.get(urlMain+'/api/rest/Serie/capitulosSerie/'+serie+'/'+season).json()
-    episodes = response['response']['data']
-    # TODO: Error handling
+    episodes = api('/Serie/capitulosSerie/'+serie+'/'+season)
 
     for episode in episodes:
         episode_item(episode)
