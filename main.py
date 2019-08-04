@@ -82,7 +82,7 @@ def log(msg, level=xbmc.LOGNOTICE):
     xbmc.LOGWARNING = 3
     """
 
-log('\nRun {}'.format(" ".join(sys.argv)))
+log('\nRunning {}'.format(" ".join(sys.argv)))
 
 
 def get_url(**kwargs):
@@ -95,23 +95,11 @@ def get_url(**kwargs):
     """
     return '{0}?{1}'.format(_url, urlencode(kwargs))
 
-
+import requests
 import cookielib
 import urllib2
 cookiejar = cookielib.MozillaCookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
 userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2566.0 Safari/537.36"
-opener.addheaders = [('User-agent', userAgent)]
-
-def getUnicodePage(url):
-    print url
-    req = opener.open(url)
-    content = ""
-    encoding = 'utf-8'
-    if "content-type" in req.headers and "charset=" in req.headers['content-type']:
-        encoding=req.headers['content-type'].split('charset=')[-1]
-    content = unicode(req.read(), encoding)
-    return content
 
 def deleteCookies():
     if os.path.exists(cookieFile):
@@ -145,77 +133,25 @@ def retrieveOrAskAuth():
     if not password:
         password = requestPassword()
 
+    addon.setSetting('username', username)
+    addon.setSetting('password', password)
     return username, password
 
 def login(retry=False):
-    def isAuth(content):
-        return '_auth.php' in content
-
-    def successFullLogin(content):
-        return '_logoff.php' in content
-    log("Ensuring login")
-
-    br = mechanize.Browser()
-    br.set_cookiejar(cookiejar)
-    br.set_handle_gzip(True)
-    br.set_handle_robots(False)
-    br.addheaders = [('User-Agent', userAgent)]
-
-    br.open(urlMain)
-    content = u(br.response().read())
-    log("Session check at {} {}".format(br.geturl(), dumphash(content)))
-    if successFullLogin(content):
-        log("Guifibaix: Already logged in")
-        return br
-
-    if not isAuth(content):
-        log("pantalla rara")
-        if retry:
-            notify("Unable to login")
-            return None
-        notify("Reseting session")
-        deleteCookies()
-        return login(retry=True)
-
-    log("Auth required")
 
     username, password = retrieveOrAskAuth()
-    if not password: return br
 
-    br.select_form(action="_auth.php")
-    br["username"] = username
-    br["password"] = password
-    br.addheaders = [
-        ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
-        ('Accept-Encoding', 'gzip, deflate'),
-        ('Accept-Language', 'en-US;q=0.7,en;q=0.3'),
-        ('Cache-Control', 'no-cache'),
-        ('Connection', 'keep-alive'),
-        ('Content-Type', 'application/x-www-form-urlencoded'),
-        ('User-Agent', userAgent),
-        ('Upgrade-Insecure-Requests', '1'),
-    ]
-    startBusy()
-    br.submit()
-    content = u(br.response().read())
-    log("Auth resulted in {} {}".format(br.geturl(), dumphash(content)))
-    endBusy()
-
-    addon.setSetting('username', username)
-    addon.setSetting('access', 'trying')
-
-    if not successFullLogin(content):
-        log(content)
-        log("Failed login")
-        notify("Login failed")
-        return None
-
-    addon.setSetting('password', password)
-    addon.setSetting('access', 'success')
+    session = requests.Session()
+    session.cookies = cookiejar
+    result = session.post(urlMain+'/api/rest/User/login', data=dict(
+        user = username,
+        passwd = password,
+    ))
+    log(result.json())
 
     cookiejar.save(cookieFile, ignore_discard=True, ignore_expires=True)
 
-    return br
+    return session
 
 
 def series_list():
@@ -223,9 +159,8 @@ def series_list():
     Create the list of video categories in the Kodi interface.
     """
     browser = login()
-    browser.open(urlMain+'/api/rest/Series/listaCompleta')
-    import json
-    series = json.loads(browser.response().read())['response']['data']
+    response = browser.get(urlMain+'/api/rest/Series/listaCompleta').json()
+    series = response['response']['data']
     # TODO: Error handling
 
     # Location step
@@ -277,9 +212,8 @@ def series_list():
 
 def season_list(serie):
     browser = login()
-    browser.open(urlMain+'/api/rest/Serie/temporadasSerie/'+serie)
-    import json
-    seasons = json.loads(browser.response().read())['response']['data']
+    response = browser.get(urlMain+'/api/rest/Serie/temporadasSerie/'+serie).json()
+    seasons = response['response']['data']
     # TODO: Error handling
 
     for season in seasons:
@@ -295,12 +229,10 @@ def season_list(serie):
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
 
-
 def episode_list(serie, season):
     browser = login()
-    browser.open(urlMain+'/api/rest/Serie/capitulosSerie/'+serie+'/'+season)
-    import json
-    episodes = json.loads(browser.response().read())['response']['data']
+    response = browser.get(urlMain+'/api/rest/Serie/capitulosSerie/'+serie+'/'+season).json()
+    episodes = response['response']['data']
     # TODO: Error handling
 
     for episode in episodes:
