@@ -374,7 +374,7 @@ def router(paramstring):
     """
     params = dict(parse_qsl(paramstring))
 
-    action = (params or {}).pop('action','category_list')
+    action = params.pop('action','category_list')
 
     dispatchers = { fun.__name__: fun for fun in entrypoints}
     dispatcher = dispatchers.get(action, None)
