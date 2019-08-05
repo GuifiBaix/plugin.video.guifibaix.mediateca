@@ -226,23 +226,6 @@ def episode_list(serie, season):
         item_processor = episode_item,
     )
 
-def category_item(category):
-    # Create a list item with a text label and a thumbnail image.
-    title = category['title']
-    list_item = xbmcgui.ListItem(label=title)
-    # For available properties see the following link:
-    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-    list_item.setInfo('video', dict(category,
-        mediatype = 'video',
-    ))
-    list_item.setArt(dict(category,
-    ))
-    url = kodi_link(action=category['action'])
-    # Add our item to the Kodi virtual folder listing.
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
-    return list_item
-
 
 def statusString(item):
     stateId = item.get("Estado",'0')
@@ -260,6 +243,42 @@ def l(item, key):
     if not string: return []
     result = [x.strip() for x in string.split(',') ]
     return result
+
+
+"""
+# https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+Wanted metadata:
+
+episodeguide: 
+showlink: (no lo acabo de entender, pero si es para relacionar media estaria cojonudo)
+mpaa: (PG-1...)
+premiered (date)
+aired (date)
+tag: tag list
+set: collection
+setoverview: collection description
+castandrole: actor-papel
+country: ISO
+imdbnumber: imdb id
+code: production code???
+"""
+
+def category_item(category):
+    " Creates a category list item"
+
+    title = category['title']
+    list_item = xbmcgui.ListItem(label=title)
+    # For available properties see the following link:
+    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
+    list_item.setInfo('video', dict(category,
+        mediatype = 'video',
+    ))
+    list_item.setArt(dict(category,
+    ))
+    url = kodi_link(action=category['action'])
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+    return list_item
 
 
 def serie_item(serie):
