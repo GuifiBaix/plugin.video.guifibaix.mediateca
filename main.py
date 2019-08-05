@@ -263,16 +263,13 @@ def l(item, key):
 
 
 def serie_item(serie):
-    # Create a list item with a text label and a thumbnail image.
+    " Creates a serie list item"
+
     if serie['Retirada'] == '1': return None
     if serie['Activo'] != '1': return None
 
     title = serie['Serie']
     list_item = xbmcgui.ListItem(label=title)
-    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
-    # Here we use the same image for all items for simplicity's sake.
-    # In a real-life plugin you need to set each image accordingly.
-    mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
     list_item.setArt(dict(
         thumb = apiurl(serie['Poster']),
         poster = apiurl(serie['Poster']),
@@ -301,7 +298,7 @@ def serie_item(serie):
 
 
 def season_item(season):
-    # Create a list season with a text label and a thumbnail image.
+    "Creates a season list item"
 
     if season['Retirada'] == '1': return None
     if season['Activo'] != '1': return None
@@ -337,6 +334,8 @@ def season_item(season):
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
 
 def episode_item(episode):
+    "Creates an episode list item"
+
     if episode['Retirada'] == '1': return None
     if episode['Activo'] != '1': return None
 
