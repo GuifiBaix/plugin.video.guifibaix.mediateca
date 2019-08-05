@@ -178,7 +178,12 @@ categories = [
 
 
 def listing(title, items, item_processor):
-    #log(_("{} {}", item_processor.__name__, items[0]))
+
+    # Debuging help if we missed some attribute
+    items and log(_("{}, receivedattributes: {}",
+        item_processor.__name__,
+        ', '.join(sorted(items[0]))))
+
     # Location step
     xbmcplugin.setPluginCategory(_handle, title)
     # Inform the skin of the kind of media
