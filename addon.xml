@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.guifibaix.mediateca"
-version="0.1"
+version="0.2"
 name="Guifibaix Mediateca"
 provider-name="Guifibaix SCCL">
 <requires>
@@ -18,11 +18,20 @@ provider-name="Guifibaix SCCL">
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
-    <screenshot>resources\screenshot-01.jpg</screenshot>
-    <screenshot>resources\screenshot-02.jpg</screenshot>
-    <screenshot>resources\screenshot-03.jpg</screenshot>    
-    <language>resources/language/en/strings.xml</language>
+	<screenshot>resources/media/kodi-mediateca-001.jpg</screenshot>
+	<screenshot>resources/media/kodi-mediateca-002.jpg</screenshot>
+	<screenshot>resources/media/kodi-mediateca-003.jpg</screenshot>
+	<screenshot>resources/media/kodi-mediateca-004.jpg</screenshot>
+	<screenshot>resources/media/kodi-mediateca-005.jpg</screenshot>
+	<screenshot>resources/media/kodi-mediateca-006.jpg</screenshot>
   </assets>
-  <news>Primera versió</news>
+  <news>
+v0.2 (2019-08-03)
+- Added support for films.
+- More metadata added.
+
+v0.1 (2019-08-01)
+- First version with series.
+</news>
 </extension>
 </addon>
