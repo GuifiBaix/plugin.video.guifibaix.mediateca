@@ -327,7 +327,6 @@ def season_item(season):
     if season['Activo'] != '1': return None
 
     title = _("Temporada {}", season['Temporada'])
-    mediaBase = quote(b(season['Ruta']))
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
@@ -364,7 +363,6 @@ def episode_item(episode):
     if episode['Activo'] != '1': return None
 
     title = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
-    mediaBase = quote(b(episode['Fichero'][:-len('.mp4')]))
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
@@ -405,7 +403,6 @@ def film_item(movie):
         return None
 
     title = _("{Titulo}", **movie)
-    mediaBase = quote(b(movie['Fichero'][:-len('.mp4')]))
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
