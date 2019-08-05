@@ -169,12 +169,13 @@ categories = [
         action='series_list',
         thumbnail='file:///'+icon,
         fanart='file:///'+icon,
+        plot="Todas las series disponibles",
     ),
 ]
 
 
 def listing(title, items, item_processor):
-    log(_("{} {}", item_processor.__name__, list(items[0].keys())))
+    #log(_("{} {}", item_processor.__name__, items[0]))
     # Location step
     xbmcplugin.setPluginCategory(_handle, title)
     # Inform the skin of the kind of media
@@ -210,25 +211,12 @@ def season_list(serie):
     )
 
 def episode_list(serie, season):
-    episodes = api('/Serie/capitulosSerie/'+serie+'/'+season)
+    episodes = api('Serie/capitulosSerie/'+serie+'/'+season)
     listing(
         title = episodes[0]['Serie'],
         items = episodes,
         item_processor = episode_item,
     )
-
-
-"""
-Info tags:
-
-
-Art tags:
-- poster
-- landscape
-- fanart
-- thumb
-"""
-
 
 def category_item(category):
     # Create a list item with a text label and a thumbnail image.
@@ -248,6 +236,22 @@ def category_item(category):
     return list_item
 
 
+def statusString(item):
+    stateId = item.get("Estado",'0')
+    stateText = {
+        "1": _("En emision"),
+        "2": _("Esperando temporada"),
+        "3": _("Finalizada"),
+        "4": _("Cancelada"),
+    }.get(stateId)
+    return stateText
+
+def l(item, key):
+    string = item.get(key) or ''
+    result = [x.strip() for x in string.split(',') ]
+    return result
+
+
 def serie_item(serie):
     # Create a list item with a text label and a thumbnail image.
     if serie['Retirada'] == '1': return None
@@ -262,18 +266,24 @@ def serie_item(serie):
     list_item.setArt(dict(
         thumb = urlMain+mediaBase+'/cover.jpg',
         poster = urlMain+mediaBase+'/cover.jpg',
-        cover = urlMain+mediaBase+'/cover.jpg',
+        #cover = urlMain+mediaBase+'/cover.jpg',
         fanart = urlMain+mediaBase+'/fanart.jpg',
     ))
-    # For available properties see the following link:
-    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-    list_item.setInfo('video', {
-        'title': title,
-        'mediatype': 'video',
-        'genre': serie.get('Genero','None'),
-        'year': int(serie['Año']),
-    })
+    list_item.setInfo('video', dict(
+        title = title,
+        rating = serie['Rating'],
+        tvshowtitle = serie['Serie'],
+        mediatype = 'serie',
+        year = int(serie['Año']),
+        plot = serie['Sipnosis'], # Misspelled in db
+        playcount = serie.get('VecesVisto'),
+        cast = l(serie, 'Reparto'),
+        director = l(serie, 'Director'),
+        studio = l(serie, 'Productora'),
+        writer = l(serie, 'Guion'),
+        dateadded = serie.get('FechaAñadido'),
+        status = statusString(serie),
+    ))
     url = kodi_link(action='season_list', serie=serie['IdSerie'])
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
@@ -299,15 +309,22 @@ def season_item(season):
         cover = urlMain+mediaBase+'/cover.jpg',
         fanart = urlMain+mediaBase+'/fanart.jpg',
     ))
-    # For available properties see the following link:
-    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-    list_item.setInfo('video', {
-        'title': title,
-        'genre': title,
-        'mediatype': 'video',
-        'year': int(season['Año']),
-    })
+    list_item.setInfo('video', dict(
+        title = title,
+        rating = season['Rating'],
+        tvshowtitle = season['Serie'],
+        mediatype = 'season',
+        year = int(season['Año']),
+        season = int(season['Temporada']),
+        plot = season['Sipnosis'], # Misspelled in db
+        playcount = season.get('VecesVisto'),
+        cast = l(season, 'Reparto'),
+        director = l(season, 'Director'),
+        studio = l(season, 'Productora'),
+        writer = l(season, 'Guion'),
+        dateadded = season.get('FechaAñadido'),
+        status = statusString(season),
+    ))
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
@@ -320,21 +337,29 @@ def episode_item(episode):
     mediaBase = quote(b(episode['Fichero'][:-len('.mp4')]))
 
     list_item = xbmcgui.ListItem(label=title)
-    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list .
-    # Here we use the same image for all items for simplicity's sake.
-    # In a real-life plugin you need to set each image accordingly.
     list_item.setArt(dict(
         thumb = urlMain+mediaBase+'.jpg',
-        poster = urlMain+mediaBase+'.jpg',
-        cover = urlMain+mediaBase+'.jpg',
+        #poster = urlMain+mediaBase+'.jpg',
+        #cover = urlMain+mediaBase+'.jpg',
     ))
-    # Set additional info for the list item.
-    # 'mediatype' is needed for skin to display info for this ListItem correctly.
-    list_item.setInfo('video', {
-        'title': title,
-        'mediatype': 'video',
-        'year': int(episode['Año']),
-    })
+    list_item.setInfo('video', dict(
+        originaltitle = episode['Titulo'],
+        title = title,
+        rating = episode['Rating'],
+        tvshowtitle = episode['Serie'],
+        mediatype = 'episode',
+        year = int(episode['Año']),
+        season = int(episode['Temporada']),
+        episode = episode['Capitulo'],
+        plot = episode['Sipnosis'], # Misspelled in db
+        playcount = episode.get('VecesVisto'),
+        cast = l(episode, 'Reparto'),
+        director = l(episode, 'Director'),
+        studio = l(episode, 'Productora'),
+        writer = l(episode, 'Guion'),
+        dateadded = episode.get('FechaAñadido'),
+        status = statusString(episode),
+    ))
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='play_video', url=urlMain+quote(b(episode['Fichero'])))
     # Add our item to the Kodi virtual folder listing.
