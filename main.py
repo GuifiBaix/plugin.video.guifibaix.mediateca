@@ -60,11 +60,18 @@ cookieFile = os.path.join(addonUserDataFolder, "mediateca.cookies")
 
 icon = os.path.join(addonFolder, "icon.png")
 def notify(message):
+    "GUI notification"
     xbmc.executebuiltin(b(u('XBMC.Notification(Info:,'+message+',2000,'+icon+')')))
-def startBusy():
+
+from contextlib import contextmanager
+@contextmanager
+def busy():
     xbmc.executebuiltin('ActivateWindow(busydialog)')
-def endBusy():
-    xbmc.executebuiltin('Dialog.Close(busydialog)')
+    try:
+        yield
+    finally:
+        xbmc.executebuiltin('Dialog.Close(busydialog)')
+
 def log(msg, level=xbmc.LOGNOTICE):
     # xbmc.log('%s: %s' % (addonID, msg), level)
     log_message = u'{0}: [{2}] {1}'.format(addonID, msg, _handle)
@@ -80,10 +87,7 @@ def log(msg, level=xbmc.LOGNOTICE):
     xbmc.LOGWARNING = 3
     """
 
-log('\nRunning {}'.format(" ".join(sys.argv)))
-
-
-def get_url(**kwargs):
+def kodi_link(**kwargs):
     """
     Create a URL for calling the plugin recursively from the given set of keyword arguments.
 
@@ -141,11 +145,11 @@ def login(retry=False):
 
     session = requests.Session()
     session.cookies = cookiejar
-    result = session.post(urlMain+'/api/rest/User/login', data=dict(
+    result = session.get(urlMain+'/api/rest/User/login', data=dict(
         user = username,
         passwd = password,
     ))
-    log(result.json())
+    log(_('Login result: {}', result.json()))
 
     cookiejar.save(cookieFile, ignore_discard=True, ignore_expires=True)
 
@@ -154,62 +158,94 @@ def login(retry=False):
 def api(url):
     session=login()
     response = session.get(urlMain+'/api/rest/'+url).json()
-    # TODO: Error handling
+    # TODO: Serious error handling
+    if response.get('errors'):
+        log(_('Errors: {}', response['errors']))
     return response['response']['data']
 
+categories = [
+    dict(
+        title="Series",
+        action='series_list',
+        thumbnail='file:///'+icon,
+        fanart='file:///'+icon,
+    ),
+]
 
-def series_list():
-    """
-    List of series
-    """
-    series = api('Series/listaCompleta')
 
+def listing(title, items, item_processor):
+    log(_("{} {}", item_processor.__name__, list(items[0].keys())))
     # Location step
-    xbmcplugin.setPluginCategory(_handle, 'Series')
-    # Set plugin content. It allows Kodi to select appropriate views
-    # for this type of content.
+    xbmcplugin.setPluginCategory(_handle, title)
+    # Inform the skin of the kind of media
     xbmcplugin.setContent(_handle, 'videos')
 
-    for serie in series:
-        serie_item(serie)
+    for item in items:
+        item_processor(item)
 
-    # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
 
+def category_list():
+    listing(
+        title = _("Mediateca"),
+        items = categories,
+        item_processor = category_item,
+        )
+
+def series_list():
+    listing(
+        title = _("Series"),
+        items = api('Series/listaCompleta'),
+        item_processor = serie_item,
+    )
 
 def season_list(serie):
     seasons = api('Serie/temporadasSerie/'+serie)
-
-    for season in seasons:
-        season_item(season)
-
-    # Location step
-    xbmcplugin.setPluginCategory(_handle, seasons[0]['Serie'])
-    # Set plugin content. It allows Kodi to select appropriate views
-    # for this type of content.
-    xbmcplugin.setContent(_handle, 'videos')
-
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
-    # Finish creating a virtual folder.
-    xbmcplugin.endOfDirectory(_handle)
+    listing(
+        title = seasons[0]['Serie'],
+        items = seasons,
+        item_processor = season_item,
+    )
 
 def episode_list(serie, season):
     episodes = api('/Serie/capitulosSerie/'+serie+'/'+season)
+    listing(
+        title = episodes[0]['Serie'],
+        items = episodes,
+        item_processor = episode_item,
+    )
 
-    for episode in episodes:
-        episode_item(episode)
 
-    # Location step
-    xbmcplugin.setPluginCategory(_handle, episodes[0]['Serie'])
-    # Set plugin content. It allows Kodi to select appropriate views
-    # for this type of content.
-    xbmcplugin.setContent(_handle, 'videos')
+"""
+Info tags:
 
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
-    # Finish creating a virtual folder.
-    xbmcplugin.endOfDirectory(_handle)
+
+Art tags:
+- poster
+- landscape
+- fanart
+- thumb
+"""
+
+
+def category_item(category):
+    # Create a list item with a text label and a thumbnail image.
+    title = category['title']
+    list_item = xbmcgui.ListItem(label=title)
+    # For available properties see the following link:
+    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
+    list_item.setInfo('video', dict(category,
+        mediatype = 'video',
+    ))
+    list_item.setArt(dict(category,
+    ))
+    url = kodi_link(action=category['action'])
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+    return list_item
 
 
 def serie_item(serie):
@@ -218,17 +254,14 @@ def serie_item(serie):
     if serie['Activo'] != '1': return None
 
     title = serie['Serie']
-    title_path = quote(b(title.replace("'","")))
     list_item = xbmcgui.ListItem(label=title)
     # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
     # Here we use the same image for all items for simplicity's sake.
     # In a real-life plugin you need to set each image accordingly.
     mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
-    if mediaBase != '/Series/' + title_path:
-        log("{} {}".format(title_path, mediaBase))
     list_item.setArt(dict(
-        poster = urlMain+mediaBase+'/cover.jpg',
         thumb = urlMain+mediaBase+'/cover.jpg',
+        poster = urlMain+mediaBase+'/cover.jpg',
         cover = urlMain+mediaBase+'/cover.jpg',
         fanart = urlMain+mediaBase+'/fanart.jpg',
     ))
@@ -237,12 +270,11 @@ def serie_item(serie):
     # 'mediatype' is needed for a skin to display info for this ListItem correctly.
     list_item.setInfo('video', {
         'title': title,
-        'genre': title,
         'mediatype': 'video',
+        'genre': serie.get('Genero','None'),
+        'year': int(serie['Año']),
     })
-    url = get_url(action='season_list', serie=serie['IdSerie'])
-    # is_folder = True means that this item opens a sub-list of lower level items.
-    is_folder = True
+    url = kodi_link(action='season_list', serie=serie['IdSerie'])
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
     return list_item
@@ -262,8 +294,8 @@ def season_item(season):
     # Here we use the same image for all items for simplicity's sake.
     # In a real-life plugin you need to set each image accordingly.
     list_item.setArt(dict(
-        poster = urlMain+mediaBase+'/cover.jpg',
         thumb = urlMain+mediaBase+'/cover.jpg',
+        poster = urlMain+mediaBase+'/cover.jpg',
         cover = urlMain+mediaBase+'/cover.jpg',
         fanart = urlMain+mediaBase+'/fanart.jpg',
     ))
@@ -274,10 +306,9 @@ def season_item(season):
         'title': title,
         'genre': title,
         'mediatype': 'video',
+        'year': int(season['Año']),
     })
-    url = get_url(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
-    # is_folder = True means that this season opens a sub-list of lower level items.
-    is_folder = True
+    url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
 
@@ -293,8 +324,8 @@ def episode_item(episode):
     # Here we use the same image for all items for simplicity's sake.
     # In a real-life plugin you need to set each image accordingly.
     list_item.setArt(dict(
-        poster = urlMain+mediaBase+'.jpg',
         thumb = urlMain+mediaBase+'.jpg',
+        poster = urlMain+mediaBase+'.jpg',
         cover = urlMain+mediaBase+'.jpg',
     ))
     # Set additional info for the list item.
@@ -302,28 +333,36 @@ def episode_item(episode):
     list_item.setInfo('video', {
         'title': title,
         'mediatype': 'video',
+        'year': int(episode['Año']),
     })
-    # Set 'IsPlayable' property to 'true'.
-    # This is mandatory for playable items!
     list_item.setProperty('IsPlayable', 'true')
-    url = get_url(action='play', video=urlMain+quote(b(episode['Fichero'])))
-    # Add the list item to a virtual Kodi folder.
-    is_folder = False
+    url = kodi_link(action='play_video', url=urlMain+quote(b(episode['Fichero'])))
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
 
-def play_video(path):
+def play_video(url):
     """
-    Play a video by the provided path.
+    Play a video by the provided url.
 
-    :param path: Fully-qualified video URL
-    :type path: str
+    :param url: Fully-qualified video URL
+    :type url: str
     """
-    # Create a playable item with a path to play.
-    play_item = xbmcgui.ListItem(path=path)
+    # Create a playable item with a url to play.
+    play_item = xbmcgui.ListItem(path=url)
     # Pass the item to the Kodi player.
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
+
+entrypoints = [
+    series_list,
+    category_list,
+    season_list,
+    episode_list,
+    play_video,
+]
+
+log('\nRunning {}'.format(" ".join(sys.argv)))
+
 
 def router(paramstring):
     """
@@ -334,32 +373,17 @@ def router(paramstring):
     :type paramstring: str
     """
     params = dict(parse_qsl(paramstring))
-    # Check the parameters passed to the plugin
-    if params:
-        action = params['action']
 
-        if action == 'season_list':
-            season_list(params['serie'])
+    action = (params or {}).pop('action','category_list')
 
-        elif action == 'episode_list':
-            episode_list(params['serie'], params['season'])
-
-        elif action == 'play':
-            # Play a video from a provided URL.
-            play_video(params['video'])
-
-        else:
-            # If the provided paramstring does not contain a supported action
-            # we raise an exception. This helps to catch coding errors,
-            # e.g. typos in action names.
-            raise ValueError('Invalid paramstring: {0}!'.format(paramstring))
-    else:
-        # If the plugin is called from Kodi UI without any parameters,
-        # display the list of video categories
-        series_list()
-
+    dispatchers = { fun.__name__: fun for fun in entrypoints}
+    dispatcher = dispatchers.get(action, None)
+    if not dispatcher:
+        raise ValueError('Invalid paramstring: {0}!'.format(paramstring))
+    dispatcher(**params)
 
 if __name__ == '__main__':
+    # Params are urlencoded as the second parameter
     # Call the router function and pass the plugin call parameters to it.
     # We use string slicing to trim the leading '?' from the plugin call paramstring
     router(sys.argv[2][1:])
