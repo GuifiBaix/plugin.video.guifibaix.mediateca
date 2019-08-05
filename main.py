@@ -408,7 +408,8 @@ def film_item(movie):
     list_item.setArt(dict(
         thumb = apiurl(movie['Poster']),
         poster = apiurl(movie['Poster']),
-        fanart = apiurl(movie['Poster']),
+        cover = apiurl(movie['Poster']),
+        fanart = apiurl(movie['Poster'][:-len('cover.jpg')]+'fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
         originaltitle = movie['Titulo'],
