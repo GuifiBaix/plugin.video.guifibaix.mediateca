@@ -158,14 +158,14 @@ categories = [
     dict(
         title=_("Series"),
         action='series_list',
-        thumb=icon,
+        thumb='DefaultTVShows.png',
         fanart=icon,
         plot="Todas las series disponibles",
     ),
     dict(
         title=_("Películas"),
         action='film_list',
-        thumb=icon,
+        thumb='DefaultMovies.png',
         fanart=icon,
         plot=_("Todas las películas disponibles"),
     ),
