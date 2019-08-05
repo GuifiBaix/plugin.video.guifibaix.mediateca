@@ -168,10 +168,10 @@ def api(url):
 
 categories = [
     dict(
-        title="Series",
+        title=_("Series"),
         action='series_list',
-        thumbnail='file:///'+icon,
-        fanart='file:///'+icon,
+        thumb=icon,
+        fanart=icon,
         plot="Todas las series disponibles",
     ),
 ]
