@@ -173,39 +173,7 @@ def series_list():
     xbmcplugin.setContent(_handle, 'videos')
 
     for serie in series:
-        # Create a list item with a text label and a thumbnail image.
-
-        if serie['Retirada'] == '1': continue
-        if serie['Activo'] != '1': continue
-
-        title = serie['Serie']
-        title_path = quote(b(title.replace("'","")))
-        list_item = xbmcgui.ListItem(label=title)
-        # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
-        # Here we use the same image for all items for simplicity's sake.
-        # In a real-life plugin you need to set each image accordingly.
-        mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
-        if mediaBase != '/Series/' + title_path:
-            log("{} {}".format(title_path, mediaBase))
-        list_item.setArt(dict(
-            poster = urlMain+mediaBase+'/cover.jpg',
-            thumb = urlMain+mediaBase+'/cover.jpg',
-            cover = urlMain+mediaBase+'/cover.jpg',
-            fanart = urlMain+mediaBase+'/fanart.jpg',
-        ))
-        # For available properties see the following link:
-        # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-        # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-        list_item.setInfo('video', {
-            'title': title,
-            'genre': title,
-            'mediatype': 'video',
-        })
-        url = get_url(action='season_list', serie=serie['IdSerie'])
-        # is_folder = True means that this item opens a sub-list of lower level items.
-        is_folder = True
-        # Add our item to the Kodi virtual folder listing.
-        xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+        serie_item(serie)
 
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
@@ -244,6 +212,43 @@ def episode_list(serie, season):
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
+
+
+def serie_item(serie):
+    # Create a list item with a text label and a thumbnail image.
+    if serie['Retirada'] == '1': return None
+    if serie['Activo'] != '1': return None
+
+    title = serie['Serie']
+    title_path = quote(b(title.replace("'","")))
+    list_item = xbmcgui.ListItem(label=title)
+    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list item.
+    # Here we use the same image for all items for simplicity's sake.
+    # In a real-life plugin you need to set each image accordingly.
+    mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
+    if mediaBase != '/Series/' + title_path:
+        log("{} {}".format(title_path, mediaBase))
+    list_item.setArt(dict(
+        poster = urlMain+mediaBase+'/cover.jpg',
+        thumb = urlMain+mediaBase+'/cover.jpg',
+        cover = urlMain+mediaBase+'/cover.jpg',
+        fanart = urlMain+mediaBase+'/fanart.jpg',
+    ))
+    # For available properties see the following link:
+    # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
+    list_item.setInfo('video', {
+        'title': title,
+        'genre': title,
+        'mediatype': 'video',
+    })
+    url = get_url(action='season_list', serie=serie['IdSerie'])
+    # is_folder = True means that this item opens a sub-list of lower level items.
+    is_folder = True
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+    return list_item
+
 
 def season_item(season):
     # Create a list season with a text label and a thumbnail image.
