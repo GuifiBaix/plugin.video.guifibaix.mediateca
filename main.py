@@ -98,20 +98,20 @@ def deleteCookies():
     if os.path.exists(cookieFile):
         os.remove(cookieFile)
 
-def requestPassword():
-    password = ''
-    keyboard = xbmc.Keyboard('', _("Password:"), True)
-    keyboard.setHiddenInput(True)
-    keyboard.doModal()
-    if keyboard.isConfirmed() and keyboard.getText():
-        password = keyboard.getText()
-    return password and u(password)
-
 def requestUsername(username=None):
     keyboard = xbmc.Keyboard(username or '', _('GuifiBaix user name'))
     keyboard.doModal()
     if keyboard.isConfirmed() and u(keyboard.getText()):
         return u(keyboard.getText())
+
+def requestPassword():
+    password = ''
+    keyboard = xbmc.Keyboard('', _("GuifiBaix Password"), True)
+    keyboard.setHiddenInput(True)
+    keyboard.doModal()
+    if keyboard.isConfirmed() and keyboard.getText():
+        password = keyboard.getText()
+    return password and u(password)
 
 def retrieveOrAskAuth():
     username = addon.getSetting('username')
