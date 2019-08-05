@@ -322,6 +322,8 @@ def serie_item(serie):
         studio = l(serie, 'Productora'),
         writer = l(serie, 'Guion'),
         dateadded = serie.get('FechaAñadido'),
+        aired = serie.get('PrimeraEmision'),
+        imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
     ))
     url = kodi_link(action='season_list', serie=serie['IdSerie'])
@@ -360,6 +362,7 @@ def season_item(season):
         studio = l(season, 'Productora'),
         writer = l(season, 'Guion'),
         dateadded = season.get('FechaAñadido'),
+        imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
     ))
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
@@ -398,6 +401,7 @@ def episode_item(episode):
         studio = l(episode, 'Productora'),
         writer = l(episode, 'Guion'),
         dateadded = episode.get('FechaAñadido'),
+        imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
     ))
     list_item.setProperty('IsPlayable', 'true')
