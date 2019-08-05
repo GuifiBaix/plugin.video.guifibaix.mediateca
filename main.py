@@ -366,7 +366,7 @@ def episode_item(episode):
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
-        thumb = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
+        thumb = apiurl(episode['Poster']),
         poster = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
         cover = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
         fanart = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
