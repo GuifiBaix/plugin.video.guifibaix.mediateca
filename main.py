@@ -97,6 +97,9 @@ def kodi_link(**kwargs):
     """
     return '{0}?{1}'.format(_url, urlencode(kwargs))
 
+def apiurl(unsafe):
+    return urlMain+quote(b(unsafe))
+
 import requests
 import cookielib
 import urllib2
@@ -264,10 +267,10 @@ def serie_item(serie):
     # In a real-life plugin you need to set each image accordingly.
     mediaBase = quote(b(serie['Poster'][:-len('/cover.jpg')]))
     list_item.setArt(dict(
-        thumb = urlMain+mediaBase+'/cover.jpg',
-        poster = urlMain+mediaBase+'/cover.jpg',
-        #cover = urlMain+mediaBase+'/cover.jpg',
-        fanart = urlMain+mediaBase+'/fanart.jpg',
+        thumb = apiurl(serie['Poster']),
+        poster = apiurl(serie['Poster']),
+        cover = apiurl(serie['Poster']),
+        fanart = apiurl(serie['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
         title = title,
@@ -300,14 +303,11 @@ def season_item(season):
     mediaBase = quote(b(season['Ruta']))
 
     list_item = xbmcgui.ListItem(label=title)
-    # Set graphics (thumbnail, fanart, banner, poster, landscape etc.) for the list season.
-    # Here we use the same image for all items for simplicity's sake.
-    # In a real-life plugin you need to set each image accordingly.
     list_item.setArt(dict(
-        thumb = urlMain+mediaBase+'/cover.jpg',
-        poster = urlMain+mediaBase+'/cover.jpg',
-        cover = urlMain+mediaBase+'/cover.jpg',
-        fanart = urlMain+mediaBase+'/fanart.jpg',
+        thumb = apiurl(season['Poster']),
+        poster = apiurl(season['Poster']),
+        cover = apiurl(season['Poster']),
+        fanart = apiurl(season['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
         title = title,
@@ -338,9 +338,10 @@ def episode_item(episode):
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
-        thumb = urlMain+mediaBase+'.jpg',
-        #poster = urlMain+mediaBase+'.jpg',
-        #cover = urlMain+mediaBase+'.jpg',
+        thumb = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
+        poster = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
+        cover = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
+        fanart = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
     ))
     list_item.setInfo('video', dict(
         originaltitle = episode['Titulo'],
@@ -361,7 +362,7 @@ def episode_item(episode):
         status = statusString(episode),
     ))
     list_item.setProperty('IsPlayable', 'true')
-    url = kodi_link(action='play_video', url=urlMain+quote(b(episode['Fichero'])))
+    url = kodi_link(action='play_video', url=apiurl(episode['Fichero']))
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
