@@ -12,7 +12,6 @@ standard_library.install_aliases()
 
 import sys
 import os
-import re
 try:
     from urllib.parse import urlencode, parse_qsl, quote
 except ImportError:
@@ -21,7 +20,6 @@ except ImportError:
 import xbmcgui
 import xbmcplugin
 import xbmcaddon
-import mechanize
 
 def u(text):
     if type(text)==type(u''): return text
