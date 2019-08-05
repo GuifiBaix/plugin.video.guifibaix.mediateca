@@ -255,7 +255,9 @@ def statusString(item):
     return stateText
 
 def l(item, key):
-    string = item.get(key) or ''
+    "turns a comma separated list string into an actual python list"
+    string = item.get(key)
+    if not string: return []
     result = [x.strip() for x in string.split(',') ]
     return result
 
