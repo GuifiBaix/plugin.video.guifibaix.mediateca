@@ -174,6 +174,13 @@ categories = [
         fanart=icon,
         plot="Todas las series disponibles",
     ),
+    dict(
+        title=_("Películas"),
+        action='film_list',
+        thumb=icon,
+        fanart=icon,
+        plot=_("Todas las películas disponibles"),
+    ),
 ]
 
 
@@ -202,6 +209,13 @@ def category_list():
         items = categories,
         item_processor = category_item,
         )
+
+def film_list():
+    listing(
+        title = _("Películas"),
+        items = api('Peliculas/listaCompleta'),
+        item_processor = film_item,
+    )
 
 def series_list():
     listing(
@@ -392,6 +406,49 @@ def episode_item(episode):
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
 
+def film_item(movie):
+    if movie['Activo'] != '1': return None
+    if movie['MostrarEnListaCompleta'] != '1':
+        log(_("Filtering {}", movie['Titulo']))
+        return None
+
+    title = _("{Titulo}", **movie)
+    mediaBase = quote(b(movie['Fichero'][:-len('.mp4')]))
+
+    list_item = xbmcgui.ListItem(label=title)
+    list_item.setArt(dict(
+        thumb = apiurl(movie['Poster']),
+        poster = apiurl(movie['Poster']),
+        fanart = apiurl(movie['Poster']),
+    ))
+    list_item.setInfo('video', dict(
+        originaltitle = movie['Titulo'],
+        title = title,
+        rating = movie['Rating'],
+        mediatype = 'movie',
+        year = int(movie['Año']),
+        plot = movie['Sipnosis'], # Misspelled in db
+        playcount = movie.get('VecesVisto'),
+        cast = l(movie, 'Reparto'),
+        director = l(movie, 'Director'),
+        studio = l(movie, 'Productora'),
+        writer = l(movie, 'Guion'),
+        dateadded = movie.get('FechaAñadido'),
+        imdbnumber = movie.get('IMDB_ID'),
+        trailer = movie.get('Trailer'), # TODO: Not working, needs local file, url given
+        status = statusString(movie),
+        # TODO: Unused:
+        # TODO: 'Clasificacion', 'ClasificacionPorEdad', 'Coleccion', 'Coleccion2'
+        # TODO: 'Descripcion', 'Estilo', 'IMDB_ID',
+        # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
+        # 'TMDB_ID', 'VOSE', 'Web'
+    ))
+    list_item.setProperty('IsPlayable', 'true')
+    url = kodi_link(action='play_video', url=apiurl(movie['Fichero']))
+    # Add our item to the Kodi virtual folder listing.
+    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
+
+
 def play_video(url):
     """
     Play a video by the provided url.
@@ -409,6 +466,7 @@ entrypoints = [
     category_list,
     season_list,
     episode_list,
+    film_list,
     play_video,
 ]
 
