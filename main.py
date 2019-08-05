@@ -44,10 +44,11 @@ addon = xbmcaddon.Addon()
 addonID = addon.getAddonInfo('id')
 addonFolder = u(xbmc.translatePath('special://home/addons/'+addonID))
 addonUserDataFolder = u(xbmc.translatePath("special://profile/addon_data/"+addonID))
-urlMain = addon.getSetting('baseurl')
+icon = os.path.join(addonFolder, "icon.png")
+
+urlMain = addon.getSetting('baseurl') # mediateca base url
 cookieFile = os.path.join(addonUserDataFolder, "mediateca.cookies")
 
-icon = os.path.join(addonFolder, "icon.png")
 def notify(message):
     "GUI notification"
     xbmc.executebuiltin(b(u('XBMC.Notification(Info:,'+message+',2000,'+icon+')')))
@@ -91,9 +92,7 @@ def apiurl(unsafe):
 
 import requests
 import cookielib
-import urllib2
 cookiejar = cookielib.MozillaCookieJar()
-userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2566.0 Safari/537.36"
 
 def deleteCookies():
     if os.path.exists(cookieFile):
