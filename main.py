@@ -35,17 +35,6 @@ def _(text, *args, **kwds):
     # TODO: translate
     return u(text).format(*args, **kwds)
 
-def dumphash(content):
-    return
-    import hashlib
-    import io
-    md5 = hashlib.sha1()
-    md5.update(b(content))
-    filename = u'dump_{}.html'.format(md5.hexdigest())
-    with io.open(filename, 'w', encoding='utf8') as f:
-        f.write(content)
-    return filename
-
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
