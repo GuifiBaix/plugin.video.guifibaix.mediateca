@@ -313,7 +313,7 @@ def serie_item(serie):
         title = title,
         rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
-        mediatype = 'serie',
+        mediatype = 'tvshow',
         year = int(serie['Año']),
         plot = serie['Sipnosis'], # Misspelled in db
         playcount = serie.get('VecesVisto'),
