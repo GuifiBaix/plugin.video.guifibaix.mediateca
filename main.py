@@ -200,7 +200,7 @@ categories = [
 ]
 
 
-def listing(title, items, item_processor, sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
+def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
 
     # Debuging help if we missed some attribute
     items and log(_("{}, receivedattributes: {}",
@@ -210,7 +210,7 @@ def listing(title, items, item_processor, sortings=[xbmcplugin.SORT_METHOD_LABEL
     # Location step
     xbmcplugin.setPluginCategory(_handle, title)
     # Inform the skin of the kind of media
-    xbmcplugin.setContent(_handle, 'videos')
+    xbmcplugin.setContent(_handle, content)
 
     for item in items:
         item_processor(item)
@@ -225,6 +225,7 @@ def category_list():
         title = _("Mediateca"),
         items = categories,
         item_processor = category_item,
+        content = 'videos',
         sortings=[], # sorted as listed
         )
 
@@ -233,6 +234,7 @@ def movie_list():
         title = _("Películas"),
         items = api('Peliculas/listaCompleta'),
         item_processor = movie_item,
+        content = 'movies',
         sortings = [
             xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
             xbmcplugin.SORT_METHOD_DATEADDED,
@@ -248,6 +250,7 @@ def series_list():
         title = _("Series"),
         items = api('Series/listaCompleta'),
         item_processor = serie_item,
+        content = 'tvshows',
     )
 
 def season_list(serie):
@@ -256,6 +259,7 @@ def season_list(serie):
         title = seasons[0]['Serie'],
         items = seasons,
         item_processor = season_item,
+        content = 'tvshows',
     )
 
 def episode_list(serie, season):
@@ -264,6 +268,7 @@ def episode_list(serie, season):
         title = episodes[0]['Serie'],
         items = episodes,
         item_processor = episode_item,
+        content = 'episodes',
         sortings=[
             xbmcplugin.SORT_METHOD_LABEL,
         ],
