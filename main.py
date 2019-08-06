@@ -314,6 +314,7 @@ def serie_item(serie):
         tvshowtitle = serie['Serie'],
         mediatype = 'tvshow',
         year = int(serie['Año']),
+        season = int(serie['Temporadas']),
         plot = serie['Sipnosis'], # Misspelled in db
         playcount = serie.get('VecesVisto'),
         cast = l(serie, 'Reparto'),
@@ -352,7 +353,7 @@ def season_item(season):
         tvshowtitle = season['Serie'],
         mediatype = 'season',
         year = int(season['Año']),
-        season = int(season['Temporada']),
+        season = int(season['Temporadas']),
         plot = season['Sipnosis'], # Misspelled in db
         playcount = season.get('VecesVisto'),
         cast = l(season, 'Reparto'),
@@ -388,7 +389,7 @@ def episode_item(episode):
         tvshowtitle = episode['Serie'],
         mediatype = 'episode',
         year = int(episode['Año']),
-        season = int(episode['Temporada']),
+        season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = episode['Sipnosis'], # Misspelled in db
         playcount = episode.get('VecesVisto'),
