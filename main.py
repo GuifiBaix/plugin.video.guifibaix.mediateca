@@ -206,10 +206,12 @@ def film_list():
         items = api('Peliculas/listaCompleta'),
         item_processor = film_item,
         sortings = [
+            xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
             xbmcplugin.SORT_METHOD_DATEADDED,
             xbmcplugin.SORT_METHOD_PLAYCOUNT,
             xbmcplugin.SORT_METHOD_VIDEO_YEAR,
             xbmcplugin.SORT_METHOD_VIDEO_RATING,
+            xbmcplugin.SORT_METHOD_MPAA_RATING,
         ],
     )
 
