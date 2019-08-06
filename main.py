@@ -428,6 +428,7 @@ def film_item(movie):
         title = movie['Titulo'],
         rating = movie['Rating'],
         mediatype = 'movie',
+        genre = ', '.join(l(movie, 'Generos')),
         year = int(movie['Año']),
         plot = movie['Sipnosis'], # Misspelled in db
         playcount = movie.get('VecesVisto'),
@@ -439,11 +440,11 @@ def film_item(movie):
         imdbnumber = movie.get('IMDB_ID'),
         trailer = movie.get('Trailer'), # TODO: Not working, needs local file, url given
         status = statusString(movie),
+        mpaa = movie['Clasificacion'],
         # TODO: Unused:
         # TODO: 'Clasificacion', 'ClasificacionPorEdad', 'Coleccion', 'Coleccion2'
-        # TODO: 'Descripcion', 'Estilo', 'IMDB_ID',
+        # TODO: 'Estilo', 'IMDB_ID', 'TMDB_ID', 'VOSE', 'Web'
         # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
-        # 'TMDB_ID', 'VOSE', 'Web'
     ))
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='play_video', url=apiurl(movie['Fichero']))
