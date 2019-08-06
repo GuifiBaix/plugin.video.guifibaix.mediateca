@@ -55,6 +55,7 @@ def notify(message):
 def error(message):
     "GUI notification"
     xbmc.executebuiltin(b(u('XBMC.Notification(Error,'+message+',2000,'+icon+')')))
+
 def fail(message):
     error(message)
     sys.exit(-1)
@@ -84,17 +85,24 @@ def log(msg, level=xbmc.LOGNOTICE):
     xbmc.LOGWARNING = 3
     """
 
-def kodi_link(**kwargs):
+def kodi_link(**params):
     """
     Create a URL for calling the plugin recursively from the given set of keyword arguments.
 
-    :param kwargs: "argument=value" pairs
+    :param params: "argument=value" pairs
     :return: plugin call URL
     :rtype: str
     """
-    return '{0}?{1}'.format(_url, urlencode(kwargs))
+    return '{0}?{1}'.format(_url, urlencode(params))
+
+def kodi_action(**params):
+    "Returns a menu entry action string to run a kodi link"
+
+    return 'XBMC.RunPlugin({})'.format(kodi_link(**params))
 
 def apiurl(unsafe):
+    "Constructs an url to the Mediateca Api"
+
     return urlMain+quote(b(unsafe))
 
 import requests
