@@ -164,7 +164,7 @@ categories = [
     ),
     dict(
         title=_("Películas"),
-        action='film_list',
+        action='movie_list',
         thumb='DefaultMovies.png',
         fanart=icon,
         plot=_("Todas las películas disponibles"),
@@ -200,11 +200,11 @@ def category_list():
         sortings=[], # sorted as listed
         )
 
-def film_list():
+def movie_list():
     listing(
         title = _("Películas"),
         items = api('Peliculas/listaCompleta'),
-        item_processor = film_item,
+        item_processor = movie_item,
         sortings = [
             xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
             xbmcplugin.SORT_METHOD_DATEADDED,
@@ -409,7 +409,7 @@ def episode_item(episode):
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
 
-def film_item(movie):
+def movie_item(movie):
     if movie['Activo'] != '1': return None
     if movie['MostrarEnListaCompleta'] != '1':
         return None
@@ -469,7 +469,7 @@ entrypoints = [
     category_list,
     season_list,
     episode_list,
-    film_list,
+    movie_list,
     play_video,
 ]
 
