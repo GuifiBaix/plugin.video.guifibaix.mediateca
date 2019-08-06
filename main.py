@@ -375,9 +375,9 @@ def episode_item(episode):
     if episode['Retirada'] == '1': return None
     if episode['Activo'] != '1': return None
 
-    title = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
+    label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
 
-    list_item = xbmcgui.ListItem(label=title)
+    list_item = xbmcgui.ListItem(label=label)
     list_item.setArt(dict(
         thumb = apiurl(episode['Poster']),
         poster = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
@@ -385,8 +385,8 @@ def episode_item(episode):
         fanart = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
     ))
     list_item.setInfo('video', dict(
+        title = label,
         originaltitle = episode['Titulo'],
-        title = title,
         rating = episode['Rating'],
         tvshowtitle = episode['Serie'],
         mediatype = 'episode',
@@ -412,10 +412,9 @@ def episode_item(episode):
 def film_item(movie):
     if movie['Activo'] != '1': return None
     if movie['MostrarEnListaCompleta'] != '1':
-        log(_("Filtering {}", movie['Titulo']))
         return None
 
-    title = _("{Titulo}", **movie)
+    title = _("[{Año}] {Titulo}", **movie)
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
@@ -426,7 +425,7 @@ def film_item(movie):
     ))
     list_item.setInfo('video', dict(
         originaltitle = movie['Titulo'],
-        title = title,
+        title = movie['Titulo'],
         rating = movie['Rating'],
         mediatype = 'movie',
         year = int(movie['Año']),
