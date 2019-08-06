@@ -47,11 +47,18 @@ addonUserDataFolder = u(xbmc.translatePath("special://profile/addon_data/"+addon
 icon = os.path.join(addonFolder, "icon.png")
 
 urlMain = addon.getSetting('baseurl') # mediateca base url
-cookieFile = os.path.join(addonUserDataFolder, "mediateca.cookies")
 
 def notify(message):
     "GUI notification"
-    xbmc.executebuiltin(b(u('XBMC.Notification(Info:,'+message+',2000,'+icon+')')))
+    xbmc.executebuiltin(b(u('XBMC.Notification(Info,'+message+',2000,'+icon+')')))
+
+def error(message):
+    "GUI notification"
+    xbmc.executebuiltin(b(u('XBMC.Notification(Error,'+message+',2000,'+icon+')')))
+def fail(message):
+    error(message)
+    sys.exit(-1)
+
 
 from contextlib import contextmanager
 @contextmanager
@@ -91,12 +98,6 @@ def apiurl(unsafe):
     return urlMain+quote(b(unsafe))
 
 import requests
-import cookielib
-cookiejar = cookielib.MozillaCookieJar()
-
-def deleteCookies():
-    if os.path.exists(cookieFile):
-        os.remove(cookieFile)
 
 def requestUsername(username=None):
     keyboard = xbmc.Keyboard(username or '', _('GuifiBaix user name'))
@@ -130,28 +131,47 @@ def retrieveOrAskAuth():
     addon.setSetting('password', password)
     return username, password
 
-def login(retry=False):
+def api_noauth(url, **kwds):
+    fullurl = urlMain + '/api/rest/' + url
+    try:
+        response = requests.post(fullurl, **kwds).json()
+    except requests.ConnectionError as e:
+        fail(_("No se puede connectar con la Mediateca"))
+
+    if 'Error' in response:
+        log(_("API Prototocol Error accessing {}: {}", fullurl, response['Error']))
+        fail(_("API Protocol Error"))
+
+    return response
+
+@contextmanager
+def auth():
 
     username, password = retrieveOrAskAuth()
 
-    session = requests.Session()
-    session.cookies = cookiejar
-    result = session.get(urlMain+'/api/rest/User/login', data=dict(
+    response = api_noauth('User/login/', data=dict(
         user = username,
         passwd = password,
     ))
-    log(_('Login result: {}', result.json()))
 
-    cookiejar.save(cookieFile, ignore_discard=True, ignore_expires=True)
+    if response['errors']:
+        fail(_("Login error: {}", '\n'.join(response['errors'])))
 
-    return session
+    token = response['response']['Token']
+
+    try:
+        yield token
+
+    finally:
+        response = api_noauth('User/logout/'+token)
+        if response['errors']:
+            fail(_("Logout error: {}", '\n'.join(response['errors'])))
 
 def api(url):
-    session=login()
-    response = session.get(urlMain+'/api/rest/'+url).json()
-    # TODO: Serious error handling
+    with auth() as token:
+        response = api_noauth(url+'/'+token)
     if response.get('errors'):
-        log(_('Errors: {}', response['errors']))
+        fail(_('API Error: {}', response['errors'][0]))
     return response['response']['data']
 
 categories = [
