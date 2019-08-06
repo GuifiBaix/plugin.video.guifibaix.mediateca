@@ -171,13 +171,20 @@ def auth():
         yield token
 
     finally:
-        response = api_noauth('User/logout/'+token)
+        response = api_noauth('User/logout/'+token, headers=dict(
+            Authorization = 'Bearer ' + token
+        ))
         if response['errors']:
             fail(_("Logout error: {}", '\n'.join(response['errors'])))
 
-def api(url):
+def api(url, *args):
     with auth() as token:
-        response = api_noauth(url+'/'+token)
+        url = '/'.join([url, token] + [u(a) for a in args])
+        response = api_noauth(url,
+            headers=dict(
+                Authorization = 'Bearer '+token
+            )
+        )
     if response.get('errors'):
         fail(_('API Error: {}', response['errors'][0]))
     return response['response']['data']
@@ -254,7 +261,7 @@ def series_list():
     )
 
 def season_list(serie):
-    seasons = api('Serie/temporadasSerie/'+serie)
+    seasons = api('Serie/temporadasSerie/', serie)
     listing(
         title = seasons[0]['Serie'],
         items = seasons,
@@ -263,7 +270,7 @@ def season_list(serie):
     )
 
 def episode_list(serie, season):
-    episodes = api('Serie/capitulosSerie/'+serie+'/'+season)
+    episodes = api('Serie/capitulosSerie/', serie, season)
     listing(
         title = episodes[0]['Serie'],
         items = episodes,
