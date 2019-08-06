@@ -172,7 +172,7 @@ categories = [
 ]
 
 
-def listing(title, items, item_processor):
+def listing(title, items, item_processor, sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
 
     # Debuging help if we missed some attribute
     items and log(_("{}, receivedattributes: {}",
@@ -187,7 +187,8 @@ def listing(title, items, item_processor):
     for item in items:
         item_processor(item)
 
-    xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+    for sorting in sortings:
+        xbmcplugin.addSortMethod(_handle, sorting)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
 
@@ -196,6 +197,7 @@ def category_list():
         title = _("Mediateca"),
         items = categories,
         item_processor = category_item,
+        sortings=[], # sorted as listed
         )
 
 def film_list():
@@ -203,6 +205,12 @@ def film_list():
         title = _("Películas"),
         items = api('Peliculas/listaCompleta'),
         item_processor = film_item,
+        sortings = [
+            xbmcplugin.SORT_METHOD_DATEADDED,
+            xbmcplugin.SORT_METHOD_PLAYCOUNT,
+            xbmcplugin.SORT_METHOD_VIDEO_YEAR,
+            xbmcplugin.SORT_METHOD_VIDEO_RATING,
+        ],
     )
 
 def series_list():
@@ -226,6 +234,9 @@ def episode_list(serie, season):
         title = episodes[0]['Serie'],
         items = episodes,
         item_processor = episode_item,
+        sortings=[
+            xbmcplugin.SORT_METHOD_LABEL,
+        ],
     )
 
 
@@ -353,7 +364,6 @@ def season_item(season):
         status = statusString(season),
     ))
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
-    # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
 
 def episode_item(episode):
