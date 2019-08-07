@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.guifibaix.mediateca"
 version="0.2"
-name="Guifibaix Mediateca"
-provider-name="Guifibaix SCCL">
+name="GuifiBaix Mediateca"
+provider-name="GuifiBaix SCCL">
 <requires>
   <import addon="xbmc.python" version="2.25.0"/>
   <import addon="script.module.future" version="0.16.0.4" />
@@ -13,23 +13,27 @@ provider-name="Guifibaix SCCL">
   <provides>video</provides>
 </extension>
 <extension point="xbmc.addon.metadata">
-  <summary lang="es">Guifibaix Mediateca</summary>
-  <description lang="es">La Mediateca colaborativa de la red GuifiBaix.</description>
-  <disclaimer lang="es">Los contenidos los ofrecen otros usuarios de la red Guifi.net como tú</disclaimer>
+  <summary lang="en">GuifiBaix's Collaborative Mediateca </summary>
+  <description lang="en">Collaborative Mediateca for Guifi.net communities like GuifiBaix</description>
+  <disclaimer lang="en">Contents of each specific Mediateca instance are provided by its users</disclaimer>
+  <summary lang="es">Mediateca colaborativa de GuifiBaix</summary>
+  <description lang="es">La Mediateca colaborativa para comunidades de Guifi.net como GuifiBaix.</description>
+  <disclaimer lang="es">Los contenidos de cada instancia de la Mediateca los aportan sus usuarios</disclaimer>
+  <summary lang="ca">Mediateca col·laborativa de GuifiBaix</summary>
+  <description lang="ca">La Mediateca col·laborativa para comunidades de Guifi.net como GuifiBaix.</description>
+  <disclaimer lang="ca">Els continguts de cada instancia de Mediateca els proveixen els seus usuaris</disclaimer>
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
+<!--
 	<screenshot>resources/media/kodi-mediateca-001.jpg</screenshot>
-	<screenshot>resources/media/kodi-mediateca-002.jpg</screenshot>
-	<screenshot>resources/media/kodi-mediateca-003.jpg</screenshot>
-	<screenshot>resources/media/kodi-mediateca-004.jpg</screenshot>
-	<screenshot>resources/media/kodi-mediateca-005.jpg</screenshot>
-	<screenshot>resources/media/kodi-mediateca-006.jpg</screenshot>
+-->
   </assets>
   <news>
-v0.2 (2019-08-03)
-- Added support for films.
-- More metadata added.
+v0.2 (2019-08-07)
+- Added support for movies.
+- More metadata added and better integration.
+- Using autentified API and https instead of scrapping login page.
 
 v0.1 (2019-08-01)
 - First version with series.
