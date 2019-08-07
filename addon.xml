@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.guifibaix.mediateca"
-version="0.2"
+version="0.3.0"
 name="GuifiBaix Mediateca"
 provider-name="GuifiBaix SCCL">
 <requires>
@@ -30,6 +30,9 @@ provider-name="GuifiBaix SCCL">
 -->
   </assets>
   <news>
+v0.3 (unreleased)
+- Option to enable experimental features
+
 v0.2 (2019-08-07)
 - Added support for movies.
 - More metadata added and better integration.
