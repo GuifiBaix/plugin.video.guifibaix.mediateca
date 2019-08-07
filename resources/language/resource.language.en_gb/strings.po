@@ -33,6 +33,6 @@ msgid "Password"
 msgstr "Contraseña"
 
 msgctxt "#32014"
-msgid "Enable experimental features"
-msgstr "Habiltar funcionalidades experimentales"
+msgid "Enable experimental features (at your own risk)"
+msgstr "Habiltar funcionalidades experimentales (bajo tu responsabilidad)"
 
