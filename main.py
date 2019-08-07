@@ -358,7 +358,7 @@ def serie_item(serie):
         year = int(serie['Año']),
         season = int(serie['Temporadas']),
         plot = serie['Sipnosis'], # Misspelled in db
-        playcount = serie.get('VecesVisto'),
+        #playcount = serie.get('VecesVisto'),
         cast = l(serie, 'Reparto'),
         director = l(serie, 'Director'),
         studio = l(serie, 'Productora'),
@@ -397,7 +397,7 @@ def season_item(season):
         year = int(season['Año']),
         season = int(season['Temporadas']),
         plot = season['Sipnosis'], # Misspelled in db
-        playcount = season.get('VecesVisto'),
+        #playcount = season.get('VecesVisto'),
         cast = l(season, 'Reparto'),
         director = l(season, 'Director'),
         studio = l(season, 'Productora'),
@@ -434,7 +434,7 @@ def episode_item(episode):
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = episode['Sipnosis'], # Misspelled in db
-        playcount = episode.get('VecesVisto'),
+        #playcount = episode.get('VecesVisto'),
         cast = l(episode, 'Reparto'),
         director = l(episode, 'Director'),
         studio = l(episode, 'Productora'),
@@ -471,7 +471,7 @@ def movie_item(movie):
         genre = ', '.join(l(movie, 'Generos')),
         year = int(movie['Año']),
         plot = movie['Sipnosis'], # Misspelled in db
-        playcount = movie.get('VecesVisto'),
+        #playcount = movie.get('Visto'),
         cast = l(movie, 'Reparto'),
         director = l(movie, 'Director'),
         studio = l(movie, 'Productora'),
