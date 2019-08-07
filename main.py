@@ -193,9 +193,23 @@ def api(url, *args):
         )
     if response.get('errors'):
         fail(_('API Error: {}', response['errors'][0]))
+
     return response['response']['data']
 
 categories = [
+    dict(
+        title=_("Episodios Pendientes"),
+        action='pending_list',
+        thumb='DefaultInProgressShows.png',
+        fanart=icon,
+        plot=_(
+            "Todos los nuevos episodios de las series que sigues."
+            "\n"
+            "Para seguir una serie, "
+            "usa el menu contextual con una pulsación larga."
+        ),
+        disabled=addon.getSetting("experimental")!='true',
+    ),
     dict(
         title=_("Series"),
         action='series_list',
@@ -287,6 +301,14 @@ def episode_list(serie, season):
         ],
     )
 
+def pending_list():
+    episodes = api('Serie/capitulosSerieconEstadistica/', serie, season)
+    listing(
+        title = _("Pending episodes"),
+        items = episodes,
+        item_processor = episode_item,
+    )
+
 
 def statusString(item):
     stateId = item.get("Estado",'0')
@@ -326,6 +348,8 @@ code: production code???
 
 def category_item(category):
     " Creates a category list item"
+
+    if category.get('disabled', False): return None
 
     title = category['title']
     list_item = xbmcgui.ListItem(label=title)
@@ -374,6 +398,8 @@ def serie_item(serie):
         imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
     ))
+    menu_follow_serie(list_item, serie['IdSerie'], wasSet = series.get('Subscribed')) # TODO: computeWasSet
+    list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='season_list', serie=serie['IdSerie'])
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
@@ -412,6 +438,8 @@ def season_item(season):
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
     ))
+    menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")) # TODO: computeWasSet
+    list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
 
@@ -450,6 +478,7 @@ def episode_item(episode):
         status = statusString(episode),
     ))
     list_item.setProperty('IsPlayable', 'true')
+    menu_follow_serie(list_item, episode['IdSerie'], wasSet = episode.get("Subscribed")) # TODO: computeWasSet
     url = kodi_link(action='play_video', url=apiurl(episode['Fichero']))
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
@@ -497,6 +526,21 @@ def movie_item(movie):
     # Add our item to the Kodi virtual folder listing.
     xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
 
+def menu_follow_serie(list_item, serie_id, wasSet):
+    label = _('Abandonar serie') if wasSet else _('Seguir serie')
+    action = 'unfollow_serie' if wasSet else 'follow_serie'
+    list_item.addContextMenuItems([
+        (label, kodi_action(
+            action=action,
+            serie_id=serie_id,
+        )),
+    ])
+
+def follow_serie(serie_id):
+    status = api('Alertas/subscribeToSerie/', serie_id)
+
+def unfollow_serie(serie_id):
+    status = api('Alertas/unsubscribeToSerie/', serie_id)
 
 def play_video(url):
     """
@@ -517,6 +561,9 @@ entrypoints = [
     episode_list,
     movie_list,
     play_video,
+    pending_list,
+    follow_serie,
+    unfollow_serie,
 ]
 
 log('\nRunning {}'.format(" ".join(sys.argv)))
