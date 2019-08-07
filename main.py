@@ -142,15 +142,21 @@ def retrieveOrAskAuth():
 def api_noauth(url, **kwds):
     fullurl = urlMain + '/api/rest/' + url
     try:
-        response = requests.post(fullurl, **kwds).json()
+        response = requests.post(fullurl, **kwds)
     except requests.ConnectionError as e:
         fail(_("No se puede connectar con la Mediateca"))
 
-    if 'Error' in response:
-        log(_("API Prototocol Error accessing {}: {}", fullurl, response['Error']))
+    try:
+        result = response.json()
+    except Exception as e:
+        log(_("Non JSON api response:\n{}", response.text))
+        fail(_("Invalid API response: {}", e))
+
+    if 'Error' in result:
+        log(_("API Prototocol Error accessing {}: {}", fullurl, result['Error']))
         fail(_("API Protocol Error"))
 
-    return response
+    return result
 
 @contextmanager
 def auth():
@@ -171,7 +177,7 @@ def auth():
         yield token
 
     finally:
-        response = api_noauth('User/logout/'+token, headers=dict(
+        response = api_noauth('User/logout', headers=dict(
             Authorization = 'Bearer ' + token
         ))
         if response['errors']:
@@ -179,7 +185,7 @@ def auth():
 
 def api(url, *args):
     with auth() as token:
-        url = '/'.join([url, token] + [u(a) for a in args])
+        url = '/'.join([url] + [u(a) for a in args])
         response = api_noauth(url,
             headers=dict(
                 Authorization = 'Bearer '+token
