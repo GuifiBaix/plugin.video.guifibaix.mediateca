@@ -330,7 +330,18 @@ def buildItem(data):
     return list_item
 
 
-def listing(title, items, item_processor, isFolder=True, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
+def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
+    """Defines a listing view depending on the parameters:
+    - title: view header (pluginCategory)
+    - items: items retrieved from the api to be processed
+    - item_processor: a function which turns api items into kodi list items
+    - content: how the skin should interpret the list: 
+        - files, songs, artists, albums, movies, tvshows, episodes, musicvideos, videos, images, games 
+        - See: https://codedocs.xyz/xbmc/xbmc/group__python__xbmcplugin.html#gaa30572d1e5d9d589e1cd3bfc1e2318d6
+    - sortings: list of enabled sortings the user can choose:
+        - empty means user cannot change the provided order
+        - Available values: https://codedocs.xyz/xbmc/xbmc/group__python__xbmcplugin.html#ga85b3bff796fd644fb28f87b136025f40
+    """
 
     # Debuging help if we missed some attribute
     items and log(_("{}, attribs from api: {}",
@@ -345,6 +356,7 @@ def listing(title, items, item_processor, isFolder=True, content='videos', sorti
     for item in items:
         processed = item_processor(item)
         if not processed: continue
+        isFolder = processed.pop('isfolder', True)
         url = processed.pop('target')
         li = buildItem(processed)
         xbmcplugin.addDirectoryItem(_handle, url, li, isFolder=isFolder)
@@ -369,7 +381,6 @@ def movie_list():
         items = api('Peliculas/listaCompleta'),
         item_processor = movie_item,
         content = 'movies',
-        isFolder = False,
         sortings = [
             xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
             xbmcplugin.SORT_METHOD_DATEADDED,
@@ -404,7 +415,6 @@ def episode_list(serie, season):
         items = episodes,
         item_processor = episode_item,
         content = 'episodes',
-        isFolder = False,
         sortings=[
             xbmcplugin.SORT_METHOD_LABEL,
         ],
@@ -416,7 +426,6 @@ def pending_list():
         title = _("Pending episodes"),
         items = episodes,
         item_processor = mixed_episode_item,
-        isFolder = False,
         sortings=[],
     )
 
@@ -579,6 +588,8 @@ def episode_item(episode):
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
 
+        isfolder = False,
+        playable = True,
         menus = menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
         target = kodi_link(action='play_video', url=apiurl(episode['Fichero'])),
         playable = True,
@@ -621,9 +632,10 @@ def movie_item(movie):
         # TODO: 'Estilo', 'IMDB_ID', 'TMDB_ID', 'VOSE', 'Web'
         # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
 
+        isfolder = False,
+        playable = True,
         # TODO: No API yet for that
         #menus = menu_pending_movie(movie['IdPelicula'], wasSet = movie.get("Pending"),
-        playable = True,
         target = kodi_link(action='play_video', url=apiurl(movie['Fichero'])),
     )
 
