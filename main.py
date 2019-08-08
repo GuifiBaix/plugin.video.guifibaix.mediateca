@@ -304,39 +304,18 @@ categories = [
 ]
 
 
-def buildItem(data):
-    def extract(data, tags):
-        return {
-            tag: data.pop(tag)
-            for tag in tags
-            if tag in data
-        }
-
-    label = data.pop('label')
-    artwork = extract(data, artwork_tags)
-    info = extract(data, video_info_tags)
-    menus = data.pop('menus',[])
-    playable = data.pop('playable', False)
-
-    if data:
-        log(_("Un processed keys: {}", list(data.keys())))
-
-    list_item = xbmcgui.ListItem(label=label)
-    list_item.setArt(artwork)
-    list_item.setInfo('video', info)
-    if playable:
-        list_item.setProperty('IsPlayable', 'true')
-    if menus:
-        list_item.addContextMenuItems(menus)
-
-    return list_item
-
 
 def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
     """Defines a listing view depending on the parameters:
     - title: view header (pluginCategory)
     - items: items retrieved from the api to be processed
-    - item_processor: a function which turns api items into kodi list items
+    - item_processor: a function which turns api items into a dict with the
+        the movie info keys, artwork keys and those extra one:
+        - label: the shown text
+        - menus: a list of text, action tuples
+        - playable: false to make it not playable
+        - isfolder
+        - target: the target url of the item
     - content: how the skin should interpret the list: 
         - files, songs, artists, albums, movies, tvshows, episodes, musicvideos, videos, images, games 
         - See: https://codedocs.xyz/xbmc/xbmc/group__python__xbmcplugin.html#gaa30572d1e5d9d589e1cd3bfc1e2318d6
@@ -368,6 +347,40 @@ def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin
         xbmcplugin.addSortMethod(_handle, sorting)
     # Finish creating a virtual folder.
     xbmcplugin.endOfDirectory(_handle)
+
+def buildItem(data):
+    """Guiven a dict with all the tags builds a kodi
+    GUI ListItem to be inserted in a containerA
+    Besides artwork and video info tags,
+    also receives: label, menus, playable.
+    isfolder and target should be consumed in 'listing'
+    before calling this function.
+    """
+    def extract(data, tags):
+        return {
+            tag: data.pop(tag)
+            for tag in tags
+            if tag in data
+        }
+
+    label = data.pop('label')
+    artwork = extract(data, artwork_tags)
+    info = extract(data, video_info_tags)
+    menus = data.pop('menus',[])
+    playable = data.pop('playable', False)
+
+    if data:
+        log(_("Unprocessed keys: {}", list(data.keys())))
+
+    list_item = xbmcgui.ListItem(label=label)
+    list_item.setArt(artwork)
+    list_item.setInfo('video', info)
+    if playable:
+        list_item.setProperty('IsPlayable', 'true')
+    if menus:
+        list_item.addContextMenuItems(menus)
+
+    return list_item
 
 def category_list():
     listing(
