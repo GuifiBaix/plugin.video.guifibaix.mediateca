@@ -319,12 +319,13 @@ def episode_list(serie, season):
     )
 
 def pending_list():
-    episodes = api('Serie/capitulosSerieconEstadistica/', serie, season)
+    episodes = api('Series/pendingEpisodes/')
     listing(
         title = _("Pending episodes"),
         items = episodes,
-        item_processor = episode_item,
+        item_processor = mixed_episode_item,
         isFolder = False,
+        sortings=[],
     )
 
 
@@ -468,6 +469,15 @@ def season_item(season):
     menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")=='1')
     #list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
+    return list_item, url
+
+def mixed_episode_item(episode):
+    processed = episode_item(episode)
+    if not processed: return processed
+    list_item, url = processed
+    list_item.setInfo('video', dict(
+        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode)
+    ))
     return list_item, url
 
 def episode_item(episode):
