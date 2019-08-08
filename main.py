@@ -421,7 +421,7 @@ def season_list(serie):
         title = seasons[0]['Serie'],
         items = seasons,
         item_processor = season_item,
-        content = 'tvshows',
+        content = 'seasons',
     )
 
 def episode_list(serie, season):
@@ -442,6 +442,7 @@ def pending_list():
         title = _("Pending episodes"),
         items = episodes,
         item_processor = mixed_episode_item,
+        content = 'episodes',
         sortings=[],
     )
 
@@ -542,7 +543,7 @@ def season_item(season):
         year = int(season['Año']),
         season = int(season['Temporadas']),
         plot = tags + season['Sipnosis'], # Misspelled in db
-        playcount = season.get('VecesVistoUsuario',0),
+        #playcount = season.get('VecesVistoUsuario',0),
         cast = l(season, 'Reparto'),
         director = l(season, 'Director'),
         studio = l(season, 'Productora'),
