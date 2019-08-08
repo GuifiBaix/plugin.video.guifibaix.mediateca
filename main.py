@@ -217,6 +217,7 @@ categories = [
         plot=_(
             "Todos los nuevos episodios de las series que sigues."
             "\n"
+            "\n"
             "Para seguir una serie, "
             "usa el menu contextual con una pulsación larga."
         ),
