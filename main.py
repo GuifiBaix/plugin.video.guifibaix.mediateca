@@ -353,13 +353,14 @@ def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin
     # Inform the skin of the kind of media
     xbmcplugin.setContent(_handle, content)
 
+    nitems = len(items)
     for item in items:
         processed = item_processor(item)
         if not processed: continue
         isFolder = processed.pop('isfolder', True)
         url = processed.pop('target')
         li = buildItem(processed)
-        xbmcplugin.addDirectoryItem(_handle, url, li, isFolder=isFolder)
+        xbmcplugin.addDirectoryItem(_handle, url, li, isFolder=isFolder, totalItems=nitems)
 
     for sorting in sortings:
         xbmcplugin.addSortMethod(_handle, sorting)
