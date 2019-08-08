@@ -511,8 +511,8 @@ def serie_item(serie):
         imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
 
-        target = kodi_link(action='season_list', serie=serie['IdSerie']),
         menus = menu_follow_serie(serie['IdSerie'], wasSet = serie.get('Subscribed')=='1'),
+        target = kodi_link(action='season_list', serie=serie['IdSerie']),
     )
 
 def season_item(season):
@@ -554,14 +554,6 @@ def season_item(season):
 
         menus = menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
         target = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
-    )
-
-def mixed_episode_item(episode):
-    reused = episode_item(episode)
-    return reused and dict(
-        reused,
-        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
-        label = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
     )
 
 def episode_item(episode):
@@ -608,7 +600,15 @@ def episode_item(episode):
         playable = True,
         menus = menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
         target = kodi_link(action='play_video', url=apiurl(episode['Fichero'])),
-        playable = True,
+    )
+
+def mixed_episode_item(episode):
+    reused = episode_item(episode)
+    return reused and dict(
+        reused,
+
+        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
+        label = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
     )
 
 def movie_item(movie):
@@ -645,7 +645,7 @@ def movie_item(movie):
         mpaa = movie['Clasificacion'],
         # TODO: Unused:
         # TODO: 'Clasificacion', 'ClasificacionPorEdad', 'Coleccion', 'Coleccion2'
-        # TODO: 'Estilo', 'IMDB_ID', 'TMDB_ID', 'VOSE', 'Web'
+        # TODO: 'Estilo', 'TMDB_ID', 'VOSE', 'Web'
         # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
 
         isfolder = False,
