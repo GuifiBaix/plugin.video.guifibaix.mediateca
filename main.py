@@ -95,6 +95,9 @@ def kodi_link(**params):
     """
     return '{0}?{1}'.format(_url, urlencode(params))
 
+def kodi_refresh():
+    xbmc.executebuiltin("Container.Refresh")
+
 def kodi_action(**params):
     "Returns a menu entry action string to run a kodi link"
 
@@ -386,8 +389,12 @@ def serie_item(serie):
     if serie['Retirada'] == '1': return None
     if serie['Activo'] != '1': return None
 
-    title = serie['Serie']
-    list_item = xbmcgui.ListItem(label=title)
+    tags = []
+    if serie.get("Subscribed")=='1': tags.append(_("[La sigues]"))
+    tags = ' '.join(tags)
+    if tags: tags+='\n\n'
+
+    list_item = xbmcgui.ListItem(label=serie['Serie'])
     list_item.setArt(dict(
         thumb = apiurl(serie['Poster']),
         poster = apiurl(serie['Poster']),
@@ -395,13 +402,13 @@ def serie_item(serie):
         fanart = apiurl(serie['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
-        title = title,
+        title = serie['Serie'],
         rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
         mediatype = 'tvshow',
         year = int(serie['Año']),
         season = int(serie['Temporadas']),
-        plot = serie['Sipnosis'], # Misspelled in db
+        plot = tags + serie['Sipnosis'], # Misspelled in db
         #playcount = serie.get('VecesVisto'),
         cast = l(serie, 'Reparto'),
         director = l(serie, 'Director'),
@@ -413,8 +420,8 @@ def serie_item(serie):
         imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
     ))
-    menu_follow_serie(list_item, serie['IdSerie'], wasSet = series.get('Subscribed')) # TODO: computeWasSet
-    list_item.setProperty('IsPlayable', 'true')
+    menu_follow_serie(list_item, serie['IdSerie'], wasSet = serie.get('Subscribed')=='1')
+    #list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='season_list', serie=serie['IdSerie'])
     # Add our item to the Kodi virtual folder listing.
     return list_item, url
@@ -427,6 +434,11 @@ def season_item(season):
     if season['Activo'] != '1': return None
 
     title = _("Temporada {}", season['Temporada'])
+
+    tags = []
+    if season.get("Subscribed")=='1': tags.append(_("[La sigues]"))
+    tags = ' '.join(tags)
+    if tags: tags+='\n\n'
 
     list_item = xbmcgui.ListItem(label=title)
     list_item.setArt(dict(
@@ -442,7 +454,7 @@ def season_item(season):
         mediatype = 'season',
         year = int(season['Año']),
         season = int(season['Temporadas']),
-        plot = season['Sipnosis'], # Misspelled in db
+        plot = tags + season['Sipnosis'], # Misspelled in db
         #playcount = season.get('VecesVisto'),
         cast = l(season, 'Reparto'),
         director = l(season, 'Director'),
@@ -453,8 +465,8 @@ def season_item(season):
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
     ))
-    menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")) # TODO: computeWasSet
-    list_item.setProperty('IsPlayable', 'true')
+    menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")=='1')
+    #list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     return list_item, url
 
@@ -465,6 +477,11 @@ def episode_item(episode):
     if episode['Activo'] != '1': return None
 
     label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
+
+    tags = []
+    if episode.get("Subscribed")=='1': tags.append(_("[La sigues]"))
+    tags = ' '.join(tags)
+    if tags: tags+='\n\n'
 
     list_item = xbmcgui.ListItem(label=label)
     list_item.setArt(dict(
@@ -482,7 +499,7 @@ def episode_item(episode):
         year = int(episode['Año']),
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
-        plot = episode['Sipnosis'], # Misspelled in db
+        plot = tags + episode['Sipnosis'], # Misspelled in db
         #playcount = episode.get('VecesVisto'),
         cast = l(episode, 'Reparto'),
         director = l(episode, 'Director'),
@@ -493,8 +510,8 @@ def episode_item(episode):
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
     ))
+    menu_follow_serie(list_item, episode['IdSerie'], wasSet = episode.get("Subscribed")=='1')
     list_item.setProperty('IsPlayable', 'true')
-    menu_follow_serie(list_item, episode['IdSerie'], wasSet = episode.get("Subscribed")) # TODO: computeWasSet
     url = kodi_link(action='play_video', url=apiurl(episode['Fichero']))
     # Add our item to the Kodi virtual folder listing.
     return list_item, url
@@ -538,10 +555,22 @@ def movie_item(movie):
         # TODO: 'Estilo', 'IMDB_ID', 'TMDB_ID', 'VOSE', 'Web'
         # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
     ))
+    # TODO: No API yet for that
+    #menu_pending_movie(list_item, movie['IdPelicula'], wasSet = movie.get("Pending")
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='play_video', url=apiurl(movie['Fichero']))
     # Add our item to the Kodi virtual folder listing.
     return list_item, url
+
+def menu_pending_movie(list_item, movie_id, wasSet):
+    label = _("Desmarcar pendiente") if wasSet else _('Marcar pendiente')
+    action = 'unmark_pending_movie' if wasSet else 'mark_pending_movie'
+    list_item.addContextMenuItems([
+        (label, kodi_action(
+            action=action,
+            movie_id=movie_id,
+        )),
+    ])
 
 def menu_follow_serie(list_item, serie_id, wasSet):
     label = _('Abandonar serie') if wasSet else _('Seguir serie')
@@ -554,10 +583,14 @@ def menu_follow_serie(list_item, serie_id, wasSet):
     ])
 
 def follow_serie(serie_id):
-    status = api('Alertas/subscribeToSerie/', serie_id)
+    with busy():
+        status = api('Alertas/subscribeToSerie/', serie_id)
+        kodi_refresh()
 
 def unfollow_serie(serie_id):
-    status = api('Alertas/unsubscribeToSerie/', serie_id)
+    with busy():
+        status = api('Alertas/unsubscribeToSerie/', serie_id)
+        kodi_refresh()
 
 def play_video(url):
     """
