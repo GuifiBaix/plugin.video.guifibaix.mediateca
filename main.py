@@ -651,20 +651,8 @@ def movie_item(movie):
 
         isfolder = False,
         playable = True,
-        # TODO: No API yet for that
-        #menus = menu_pending_movie(movie['IdPelicula'], wasSet = movie.get("Pending"),
         target = kodi_link(action='play_video', url=apiurl(movie['Fichero'])),
     )
-
-def menu_pending_movie(movie_id, wasSet):
-    label = _("Desmarcar pendiente") if wasSet else _('Marcar pendiente')
-    action = 'unmark_pending_movie' if wasSet else 'mark_pending_movie'
-    return [
-        (label, kodi_action(
-            action=action,
-            movie_id=movie_id,
-        )),
-    ]
 
 def menu_follow_serie(serie_id, wasSet):
     label = _('Abandonar serie') if wasSet else _('Seguir serie')
