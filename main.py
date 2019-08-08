@@ -399,7 +399,6 @@ def serie_item(serie):
     list_item.setArt(dict(
         thumb = apiurl(serie['Poster']),
         poster = apiurl(serie['Poster']),
-        cover = apiurl(serie['Poster']),
         fanart = apiurl(serie['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
@@ -445,7 +444,6 @@ def season_item(season):
     list_item.setArt(dict(
         thumb = apiurl(season['Poster']),
         poster = apiurl(season['Poster']),
-        cover = apiurl(season['Poster']),
         fanart = apiurl(season['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
@@ -497,7 +495,6 @@ def episode_item(episode):
     list_item.setArt(dict(
         thumb = apiurl(episode['Poster']),
         poster = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
-        cover = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
         fanart = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
     ))
     list_item.setInfo('video', dict(
@@ -538,7 +535,6 @@ def movie_item(movie):
     list_item.setArt(dict(
         thumb = apiurl(movie['Poster']),
         poster = apiurl(movie['Poster']),
-        cover = apiurl(movie['Poster']),
         fanart = apiurl(movie['Poster'][:-len('cover.jpg')]+'fanart.jpg'),
     ))
     list_item.setInfo('video', dict(
