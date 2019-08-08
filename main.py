@@ -239,6 +239,97 @@ categories = [
 ]
 
 
+def buildItem(data):
+    def extract(data, tags):
+        return {
+            tag: data.pop(tag)
+            for tag in tags
+            if tag in data
+        }
+
+    label = data.pop('label')
+    artwork = extract(data, [
+        # https://kodi.wiki/view/Artwork_types
+        'thumb',
+        'poster',
+        'banner',
+        'fanart',
+        'clearart',
+        'clearlogo',
+        'landscape',
+        'icon',
+    ])
+
+    info = extract(data, [
+        # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+        'genre',
+        'country',
+        'year',
+        'episode',
+        'season',
+        'sortepisode',
+        'sortseason',
+        'episodeguide',
+        'showlink',
+        'top250',
+        'setid',
+        'tracknumber',
+        'rating',
+        'userrating',
+        'watched',
+        'playcount',
+        'overlay',
+        'cast',
+        'castandrole',
+        'director',
+        'mpaa',
+        'plot',
+        'plotoutline',
+        'title',
+        'originaltitle',
+        'sorttitle',
+        'duration',
+        'studio',
+        'tagline',
+        'writer',
+        'tvshowtitle',
+        'premiered',
+        'status',
+        'set',
+        'setoverview',
+        'tag',
+        'imdbnumber',
+        'code',
+        'aired',
+        'credits',
+        'lastplayed',
+        'album',
+        'artist',
+        'votes',
+        'path',
+        'trailer',
+        'dateadded',
+        'mediatype',
+        'dbid',
+    ])
+
+    menus = data.pop('menus',[])
+    playable = data.pop('playable', False)
+
+    if data:
+        log(_("Un processed keys: {}", list(data.keys())))
+
+    list_item = xbmcgui.ListItem(label=label)
+    list_item.setArt(artwork)
+    list_item.setInfo('video', info)
+    if playable:
+        list_item.setProperty('IsPlayable', 'true')
+    if menus:
+        list_item.addContextMenuItems(menus)
+
+    return list_item
+
+
 def listing(title, items, item_processor, isFolder=True, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
 
     # Debuging help if we missed some attribute
@@ -254,7 +345,8 @@ def listing(title, items, item_processor, isFolder=True, content='videos', sorti
     for item in items:
         processed = item_processor(item)
         if not processed: continue
-        li, url = processed
+        url = processed.pop('target')
+        li = buildItem(processed)
         xbmcplugin.addDirectoryItem(_handle, url, li, isFolder=isFolder)
 
     for sorting in sortings:
@@ -368,21 +460,15 @@ code: production code???
 def category_item(category):
     " Creates a category list item"
 
-    if category.get('disabled', False): return None
+    if category.pop('disabled', False): return None
 
-    title = category['title']
-    list_item = xbmcgui.ListItem(label=title)
-    # For available properties see the following link:
-    # 'mediatype' is needed for a skin to display info for this ListItem correctly.
-    list_item.setInfo('video', dict(category,
-        mediatype = 'video',
-    ))
-    list_item.setArt(dict(category,
-    ))
-    url = kodi_link(action=category['action'])
-    # Add our item to the Kodi virtual folder listing.
-    return list_item, url
+    log("{}".format(category))
 
+    return dict(
+        category,
+        label = category['title'],
+        target = kodi_link(action=category.pop('action')),
+    )
 
 def serie_item(serie):
     " Creates a serie list item"
@@ -395,13 +481,13 @@ def serie_item(serie):
     tags = ' '.join(tags)
     if tags: tags+='\n\n'
 
-    list_item = xbmcgui.ListItem(label=serie['Serie'])
-    list_item.setArt(dict(
+    return dict(
+        label = serie['Serie'],
+
         thumb = apiurl(serie['Poster']),
         poster = apiurl(serie['Poster']),
         fanart = apiurl(serie['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
-    ))
-    list_item.setInfo('video', dict(
+
         title = serie['Serie'],
         rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
@@ -419,13 +505,10 @@ def serie_item(serie):
         aired = serie.get('PrimeraEmision'),
         imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
-    ))
-    menu_follow_serie(list_item, serie['IdSerie'], wasSet = serie.get('Subscribed')=='1')
-    #list_item.setProperty('IsPlayable', 'true')
-    url = kodi_link(action='season_list', serie=serie['IdSerie'])
-    # Add our item to the Kodi virtual folder listing.
-    return list_item, url
 
+        target = kodi_link(action='season_list', serie=serie['IdSerie']),
+        menus = menu_follow_serie(serie['IdSerie'], wasSet = serie.get('Subscribed')=='1'),
+    )
 
 def season_item(season):
     "Creates a season list item"
@@ -440,13 +523,13 @@ def season_item(season):
     tags = ' '.join(tags)
     if tags: tags+='\n\n'
 
-    list_item = xbmcgui.ListItem(label=title)
-    list_item.setArt(dict(
+    return dict(
+        label=title,
+
         thumb = apiurl(season['Poster']),
         poster = apiurl(season['Poster']),
         fanart = apiurl(season['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
-    ))
-    list_item.setInfo('video', dict(
+
         title = title,
         rating = season['Rating'],
         tvshowtitle = season['Serie'],
@@ -454,7 +537,7 @@ def season_item(season):
         year = int(season['Año']),
         season = int(season['Temporadas']),
         plot = tags + season['Sipnosis'], # Misspelled in db
-        #playcount = season.get('VecesVisto'),
+        playcount = season.get('VecesVistoUsuario',0),
         cast = l(season, 'Reparto'),
         director = l(season, 'Director'),
         studio = l(season, 'Productora'),
@@ -463,20 +546,18 @@ def season_item(season):
         dateadded = season.get('FechaAñadido'),
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
-    ))
-    menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")=='1')
-    #list_item.setProperty('IsPlayable', 'true')
-    url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
-    return list_item, url
+
+        menus = menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
+        target = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
+    )
 
 def mixed_episode_item(episode):
-    processed = episode_item(episode)
-    if not processed: return processed
-    list_item, url = processed
-    list_item.setInfo('video', dict(
-        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode)
-    ))
-    return list_item, url
+    reused = episode_item(episode)
+    return reused and dict(
+        reused,
+        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
+        label = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
+    )
 
 def episode_item(episode):
     "Creates an episode list item"
@@ -484,20 +565,21 @@ def episode_item(episode):
     if episode['Retirada'] == '1': return None
     if episode['Activo'] != '1': return None
 
-    label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
 
     tags = []
     if episode.get("Subscribed")=='1': tags.append(_("[La sigues]"))
     tags = ' '.join(tags)
     if tags: tags+='\n\n'
 
-    list_item = xbmcgui.ListItem(label=label)
-    list_item.setArt(dict(
+    label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
+
+    return dict(
+        label = label,
+
         thumb = apiurl(episode['Poster']),
         poster = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
         fanart = apiurl(episode['Fichero'][:-len('.mp4')]+'.jpg'),
-    ))
-    list_item.setInfo('video', dict(
+
         title = label,
         originaltitle = episode['Titulo'],
         rating = episode['Rating'],
@@ -516,13 +598,11 @@ def episode_item(episode):
         dateadded = episode.get('FechaAñadido'),
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
-    ))
-    menu_follow_serie(list_item, episode['IdSerie'], wasSet = episode.get("Subscribed")=='1')
-    list_item.setProperty('IsPlayable', 'true')
-    url = kodi_link(action='play_video', url=apiurl(episode['Fichero']))
-    # Add our item to the Kodi virtual folder listing.
-    return list_item, url
 
+        menus = menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
+        target = kodi_link(action='play_video', url=apiurl(episode['Fichero'])),
+        playable = True,
+    )
 
 def movie_item(movie):
     if movie['Activo'] != '1': return None
@@ -531,13 +611,13 @@ def movie_item(movie):
 
     title = _("[{Año}] {Titulo}", **movie)
 
-    list_item = xbmcgui.ListItem(label=title)
-    list_item.setArt(dict(
+    return dict(
+        label=title,
+
         thumb = apiurl(movie['Poster']),
         poster = apiurl(movie['Poster']),
         fanart = apiurl(movie['Poster'][:-len('cover.jpg')]+'fanart.jpg'),
-    ))
-    list_item.setInfo('video', dict(
+
         originaltitle = movie['Titulo'],
         title = movie['Titulo'],
         rating = movie['Rating'],
@@ -560,33 +640,32 @@ def movie_item(movie):
         # TODO: 'Clasificacion', 'ClasificacionPorEdad', 'Coleccion', 'Coleccion2'
         # TODO: 'Estilo', 'IMDB_ID', 'TMDB_ID', 'VOSE', 'Web'
         # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
-    ))
-    # TODO: No API yet for that
-    #menu_pending_movie(list_item, movie['IdPelicula'], wasSet = movie.get("Pending")
-    list_item.setProperty('IsPlayable', 'true')
-    url = kodi_link(action='play_video', url=apiurl(movie['Fichero']))
-    # Add our item to the Kodi virtual folder listing.
-    return list_item, url
 
-def menu_pending_movie(list_item, movie_id, wasSet):
+        # TODO: No API yet for that
+        #menus = menu_pending_movie(movie['IdPelicula'], wasSet = movie.get("Pending"),
+        playable = True,
+        target = kodi_link(action='play_video', url=apiurl(movie['Fichero'])),
+    )
+
+def menu_pending_movie(movie_id, wasSet):
     label = _("Desmarcar pendiente") if wasSet else _('Marcar pendiente')
     action = 'unmark_pending_movie' if wasSet else 'mark_pending_movie'
-    list_item.addContextMenuItems([
+    return [
         (label, kodi_action(
             action=action,
             movie_id=movie_id,
         )),
-    ])
+    ]
 
-def menu_follow_serie(list_item, serie_id, wasSet):
+def menu_follow_serie(serie_id, wasSet):
     label = _('Abandonar serie') if wasSet else _('Seguir serie')
     action = 'unfollow_serie' if wasSet else 'follow_serie'
-    list_item.addContextMenuItems([
+    return [
         (label, kodi_action(
             action=action,
             serie_id=serie_id,
         )),
-    ])
+    ]
 
 def follow_serie(serie_id):
     with busy():
