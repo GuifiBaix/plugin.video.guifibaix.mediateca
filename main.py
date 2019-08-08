@@ -105,8 +105,6 @@ def apiurl(unsafe):
 
     return urlMain+quote(b(unsafe))
 
-import requests
-
 def requestUsername(username=None):
     keyboard = xbmc.Keyboard(username or '', _('GuifiBaix user name'))
     keyboard.doModal()
@@ -139,62 +137,73 @@ def retrieveOrAskAuth():
     addon.setSetting('password', password)
     return username, password
 
-def api_noauth(url, **kwds):
-    fullurl = urlMain + '/api/rest/' + url
-    try:
-        response = requests.post(fullurl, **kwds)
-    except requests.ConnectionError as e:
-        fail(_("No se puede connectar con la Mediateca"))
+class MediatecaApi(object):
+    def __init__(self):
+        self._token = None
 
-    try:
-        result = response.json()
-    except Exception as e:
-        log(_("Non JSON api response:\n{}", response.text))
-        fail(_("Invalid API response: {}", e))
+    def _api_noauth(self, url, **kwds):
+        import requests
+        fullurl = urlMain + '/api/rest/' + url
+        try:
+            response = requests.post(fullurl, **kwds)
+        except requests.ConnectionError as e:
+            fail(_("No se puede connectar con la Mediateca"))
 
-    if 'Error' in result:
-        log(_("API Prototocol Error accessing {}: {}", fullurl, result['Error']))
-        fail(_("API Protocol Error"))
+        try:
+            result = response.json()
+        except Exception as e:
+            log(_("Non JSON api response:\n{}", response.text))
+            fail(_("Invalid API response: {}", e))
 
-    return result
+        for k in result:
+            if 'Error' in k and result[k]:
+                log(_("API Prototocol Error accessing {}: {}", fullurl, result[k]))
+                fail(_("API Protocol Error"))
 
-@contextmanager
-def auth():
+        return result
 
-    username, password = retrieveOrAskAuth()
+    def __enter__(self):
+        "Creates an autentication token"
+        username, password = retrieveOrAskAuth()
 
-    response = api_noauth('User/login/', data=dict(
-        user = username,
-        passwd = password,
-    ))
+        response = self._api_noauth('User/login/', data=dict(
+            user = username,
+            passwd = password,
+        ))
 
-    if response['errors']:
-        fail(_("Login error: {}", '\n'.join(response['errors'])))
+        if response['errors']:
+            fail(_("Login error: {}", '\n'.join(response['errors'])))
 
-    token = response['response']['Token']
+        self._token = response['response']['Token']
+        return self
 
-    try:
-        yield token
-
-    finally:
-        response = api_noauth('User/logout', headers=dict(
-            Authorization = 'Bearer ' + token
+    def __exit__(self, e_typ, e_val, trcbak):
+        response = self._api_noauth('User/logout', headers=dict(
+            Authorization = 'Bearer ' + self._token
         ))
         if response['errors']:
             fail(_("Logout error: {}", '\n'.join(response['errors'])))
 
-def api(url, *args):
-    with auth() as token:
+    def __call__(self, url, *args):
         url = '/'.join([url] + [u(a) for a in args])
-        response = api_noauth(url,
+        response = self._api_noauth(url,
             headers=dict(
-                Authorization = 'Bearer '+token
-            )
+                Authorization = 'Bearer '+self._token
+            ) if self._token else {},
         )
-    if response.get('errors'):
-        fail(_('API Error: {}', response['errors'][0]))
+        if response.get('errors'):
+            fail(_('API Error: {}', response['errors'][0]))
 
-    return response['response']['data']
+        if 'response' not in response or 'data' not in response['response']:
+            import json
+            log(_('Unexpected API response:\n{}', json.dumps(response)))
+            fail(_('Unexpected API response: {}'))
+
+        return response['response']['data']
+
+def api(url, *args):
+    with MediatecaApi() as mediateca:
+        return mediateca(url, *args)
 
 categories = [
     dict(
