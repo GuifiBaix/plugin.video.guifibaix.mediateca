@@ -71,7 +71,6 @@ def busy():
         xbmc.executebuiltin('Dialog.Close(busydialog)')
 
 def log(msg, level=xbmc.LOGNOTICE):
-    # xbmc.log('%s: %s' % (addonID, msg), level)
     log_message = u'{0}: [{2}] {1}'.format(addonID, msg, _handle)
     xbmc.log(b(log_message), level)
     """
@@ -334,7 +333,7 @@ def buildItem(data):
 def listing(title, items, item_processor, isFolder=True, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
 
     # Debuging help if we missed some attribute
-    items and log(_("{}, receivedattributes: {}",
+    items and log(_("{}, attribs from api: {}",
         item_processor.__name__,
         ', '.join(sorted(items[0]))))
 
@@ -440,30 +439,10 @@ def l(item, key):
     return result
 
 
-"""
-# https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-Wanted metadata:
-
-episodeguide: 
-showlink: (no lo acabo de entender, pero si es para relacionar media estaria cojonudo)
-mpaa: (PG-1...)
-premiered (date)
-aired (date)
-tag: tag list
-set: collection
-setoverview: collection description
-castandrole: actor-papel
-country: ISO
-imdbnumber: imdb id
-code: production code???
-"""
-
 def category_item(category):
     " Creates a category list item"
 
     if category.pop('disabled', False): return None
-
-    log("{}".format(category))
 
     return dict(
         category,
