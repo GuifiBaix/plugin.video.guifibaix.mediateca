@@ -48,6 +48,71 @@ icon = os.path.join(addonFolder, "icon.png")
 
 urlMain = addon.getSetting('baseurl') # mediateca base url
 
+
+# https://kodi.wiki/view/Artwork_types
+artwork_tags = [
+    'thumb',
+    'poster',
+    'banner',
+    'fanart',
+    'clearart',
+    'clearlogo',
+    'landscape',
+    'icon',
+]
+
+# https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
+video_info_tags = [
+    'genre',
+    'country',
+    'year',
+    'episode',
+    'season',
+    'sortepisode',
+    'sortseason',
+    'episodeguide',
+    'showlink',
+    'top250',
+    'setid',
+    'tracknumber',
+    'rating',
+    'userrating',
+    'watched',
+    'playcount',
+    'overlay',
+    'cast',
+    'castandrole',
+    'director',
+    'mpaa',
+    'plot',
+    'plotoutline',
+    'title',
+    'originaltitle',
+    'sorttitle',
+    'duration',
+    'studio',
+    'tagline',
+    'writer',
+    'tvshowtitle',
+    'premiered',
+    'status',
+    'set',
+    'setoverview',
+    'tag',
+    'imdbnumber',
+    'code',
+    'aired',
+    'credits',
+    'lastplayed',
+    'album',
+    'artist',
+    'votes',
+    'path',
+    'trailer',
+    'dateadded',
+    'mediatype',
+    'dbid',
+]
 def notify(message):
     "GUI notification"
     xbmc.executebuiltin(b(u('XBMC.Notification(Info,'+message+',2000,'+icon+')')))
@@ -248,71 +313,8 @@ def buildItem(data):
         }
 
     label = data.pop('label')
-    artwork = extract(data, [
-        # https://kodi.wiki/view/Artwork_types
-        'thumb',
-        'poster',
-        'banner',
-        'fanart',
-        'clearart',
-        'clearlogo',
-        'landscape',
-        'icon',
-    ])
-
-    info = extract(data, [
-        # https://codedocs.xyz/xbmc/xbmc/group__python__xbmcgui__listitem.html#ga0b71166869bda87ad744942888fb5f14
-        'genre',
-        'country',
-        'year',
-        'episode',
-        'season',
-        'sortepisode',
-        'sortseason',
-        'episodeguide',
-        'showlink',
-        'top250',
-        'setid',
-        'tracknumber',
-        'rating',
-        'userrating',
-        'watched',
-        'playcount',
-        'overlay',
-        'cast',
-        'castandrole',
-        'director',
-        'mpaa',
-        'plot',
-        'plotoutline',
-        'title',
-        'originaltitle',
-        'sorttitle',
-        'duration',
-        'studio',
-        'tagline',
-        'writer',
-        'tvshowtitle',
-        'premiered',
-        'status',
-        'set',
-        'setoverview',
-        'tag',
-        'imdbnumber',
-        'code',
-        'aired',
-        'credits',
-        'lastplayed',
-        'album',
-        'artist',
-        'votes',
-        'path',
-        'trailer',
-        'dateadded',
-        'mediatype',
-        'dbid',
-    ])
-
+    artwork = extract(data, artwork_tags)
+    info = extract(data, video_info_tags)
     menus = data.pop('menus',[])
     playable = data.pop('playable', False)
 
