@@ -236,7 +236,7 @@ categories = [
 ]
 
 
-def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
+def listing(title, items, item_processor, isFolder=True, content='videos', sortings=[xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE]):
 
     # Debuging help if we missed some attribute
     items and log(_("{}, receivedattributes: {}",
@@ -249,7 +249,10 @@ def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin
     xbmcplugin.setContent(_handle, content)
 
     for item in items:
-        item_processor(item)
+        processed = item_processor(item)
+        if not processed: continue
+        li, url = processed
+        xbmcplugin.addDirectoryItem(_handle, url, li, isFolder=isFolder)
 
     for sorting in sortings:
         xbmcplugin.addSortMethod(_handle, sorting)
@@ -271,6 +274,7 @@ def movie_list():
         items = api('Peliculas/listaCompleta'),
         item_processor = movie_item,
         content = 'movies',
+        isFolder = False,
         sortings = [
             xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
             xbmcplugin.SORT_METHOD_DATEADDED,
@@ -305,6 +309,7 @@ def episode_list(serie, season):
         items = episodes,
         item_processor = episode_item,
         content = 'episodes',
+        isFolder = False,
         sortings=[
             xbmcplugin.SORT_METHOD_LABEL,
         ],
@@ -316,6 +321,7 @@ def pending_list():
         title = _("Pending episodes"),
         items = episodes,
         item_processor = episode_item,
+        isFolder = False,
     )
 
 
@@ -371,8 +377,7 @@ def category_item(category):
     ))
     url = kodi_link(action=category['action'])
     # Add our item to the Kodi virtual folder listing.
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
-    return list_item
+    return list_item, url
 
 
 def serie_item(serie):
@@ -412,8 +417,7 @@ def serie_item(serie):
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='season_list', serie=serie['IdSerie'])
     # Add our item to the Kodi virtual folder listing.
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
-    return list_item
+    return list_item, url
 
 
 def season_item(season):
@@ -452,7 +456,7 @@ def season_item(season):
     menu_follow_serie(list_item, season['IdSerie'], wasSet = season.get("Subscribed")) # TODO: computeWasSet
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=True)
+    return list_item, url
 
 def episode_item(episode):
     "Creates an episode list item"
@@ -493,7 +497,7 @@ def episode_item(episode):
     menu_follow_serie(list_item, episode['IdSerie'], wasSet = episode.get("Subscribed")) # TODO: computeWasSet
     url = kodi_link(action='play_video', url=apiurl(episode['Fichero']))
     # Add our item to the Kodi virtual folder listing.
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
+    return list_item, url
 
 
 def movie_item(movie):
@@ -537,7 +541,7 @@ def movie_item(movie):
     list_item.setProperty('IsPlayable', 'true')
     url = kodi_link(action='play_video', url=apiurl(movie['Fichero']))
     # Add our item to the Kodi virtual folder listing.
-    xbmcplugin.addDirectoryItem(_handle, url, list_item, isFolder=False)
+    return list_item, url
 
 def menu_follow_serie(list_item, serie_id, wasSet):
     label = _('Abandonar serie') if wasSet else _('Seguir serie')
