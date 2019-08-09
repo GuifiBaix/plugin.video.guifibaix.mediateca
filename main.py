@@ -495,6 +495,7 @@ def serie_item(serie):
         fanart = apiurl(serie['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
 
         title = serie['Serie'],
+        originaltitle = serie['Serie'],
         rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
         mediatype = 'tvshow',
@@ -502,7 +503,6 @@ def serie_item(serie):
         year = int(serie['Año']),
         season = int(serie['Temporadas']),
         plot = tags + serie['Sipnosis'], # Misspelled in db
-        #playcount = serie.get('VecesVisto'),
         cast = l(serie, 'Reparto'),
         director = lfix(serie, 'Director'),
         studio = lfix(serie, 'Productora'),
@@ -540,6 +540,8 @@ def season_item(season):
         fanart = apiurl(season['Poster'][:-len('/cover.jpg')]+'/fanart.jpg'),
 
         title = title,
+        originaltitle = ' - '.join([season['Serie'],title]),
+        tagline = season['Serie'],
         rating = season['Rating'],
         tvshowtitle = season['Serie'],
         mediatype = 'season',
@@ -547,7 +549,6 @@ def season_item(season):
         year = int(season['Año']),
         season = int(season['Temporadas']),
         plot = tags + season['Sipnosis'], # Misspelled in db
-        #playcount = season.get('VecesVistoUsuario',0),
         cast = l(season, 'Reparto'),
         director = lfix(season, 'Director'),
         studio = lfix(season, 'Productora'),
@@ -600,8 +601,6 @@ def episode_item(episode):
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = tags + episode['Sipnosis'], # Misspelled in db
-        playcount = 1 if seen else 0,
-        lastplayed = '2000-01-01' if seen else '',
         cast = l(episode, 'Reparto'),
         director = lfix(episode, 'Director'),
         studio = lfix(episode, 'Productora'),
@@ -611,6 +610,8 @@ def episode_item(episode):
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
 
+        playcount = 1 if seen else 0,
+        lastplayed = '2000-01-01' if seen else '',
         path=apiurl(episode['Fichero']),
 
         isfolder = False,
@@ -640,23 +641,23 @@ def movie_item(movie):
     if movie['MostrarEnListaCompleta'] != '1':
         return None
 
-    title = _("[{Año}] {Titulo}", **movie)
+    label = _("[{Año}] {Titulo}", **movie)
+    seen = movie.get("Visto",'0')!='0'
 
     return dict(
-        label=title,
+        label=label,
 
         thumb = apiurl(movie['Poster']),
         poster = apiurl(movie['Poster']),
         fanart = apiurl(movie['Poster'][:-len('cover.jpg')]+'fanart.jpg'),
 
-        originaltitle = movie['Titulo'],
         title = movie['Titulo'],
+        originaltitle = movie['Titulo'],
         rating = movie['Rating'],
         mediatype = 'movie',
         genre = lfix(movie, 'Generos'),
         year = int(movie['Año']),
         plot = movie['Sipnosis'], # Misspelled in db
-        #playcount = movie.get('Visto'),
         cast = l(movie, 'Reparto'),
         director = lfix(movie, 'Director'),
         studio = lfix(movie, 'Productora'),
@@ -667,10 +668,10 @@ def movie_item(movie):
         trailer = youtube_plugin(movie.get("Trailer")),
         status = statusString(movie),
         mpaa = movie['Clasificacion'],
-        # TODO: Unused:
-        # TODO: 'Clasificacion', 'ClasificacionPorEdad', 'Coleccion', 'Coleccion2'
-        # TODO: 'Estilo', 'TMDB_ID', 'VOSE', 'Web'
-        # TODO: 'IdCategoria', 'IdClasificacion', 'IdPelicula', 'Identificador',
+
+        playcount = 1 if seen else 0,
+        lastplayed = '2000-01-01' if seen else '',
+        path=apiurl(movie['Fichero']),
 
         isfolder = False,
         playable = True,
