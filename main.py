@@ -425,7 +425,7 @@ def season_list(serie):
     )
 
 def episode_list(serie, season):
-    episodes = api('Serie/capitulosSerie/', serie, season)
+    episodes = api('Serie/capitulosSerieconEstadistica/', serie, season)
     listing(
         title = episodes[0]['Serie'],
         items = episodes,
@@ -571,6 +571,10 @@ def episode_item(episode):
 
     label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
 
+    menus = ( []
+        + menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1')
+        + menu_seen_episode(episode['Identificador'], wasSet = episode.get("Visto",'0')!='0')
+    )
     return dict(
         label = label,
 
@@ -587,7 +591,8 @@ def episode_item(episode):
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = tags + episode['Sipnosis'], # Misspelled in db
-        #playcount = episode.get('VecesVisto'),
+        playcount = 1 if episode.get('Visto')!='0' else 0,
+        watched = episode.get("Visto",'0') != '0',
         cast = l(episode, 'Reparto'),
         director = l(episode, 'Director'),
         studio = l(episode, 'Productora'),
@@ -681,6 +686,24 @@ def unfollow_serie(serie_id):
         status = api('Alertas/unsubscribeToSerie/', serie_id)
         kodi_refresh()
 
+def menu_seen_episode(episode, wasSet):
+    label = _('Marcar como NO visto') if wasSet else _('Marcar como visto')
+    action = unmark_episode_seen if wasSet else mark_episode_seen
+    return [
+        (label, kodi_action(
+            action=action.__name__,
+            episode=episode,
+        )),
+    ]
+
+def mark_episode_seen(episode):
+    categoriaSerie = 1
+    result = api('Estadistica/updateEstadisticaUser', episode, categoriaSerie)
+
+def unmark_episode_seen(episode):
+    categoriaSerie = 1
+    result = api('Estadistica/clearEstadisticaUser', episode, categoriaSerie)
+
 def play_video(url):
     """
     Play a video by the provided url.
@@ -703,6 +726,8 @@ entrypoints = [
     pending_list,
     follow_serie,
     unfollow_serie,
+    mark_episode_seen,
+    unmark_episode_seen,
 ]
 
 log('\nRunning {}'.format(" ".join(sys.argv)))
