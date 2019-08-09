@@ -599,9 +599,16 @@ def episode_item(episode):
 
         isfolder = False,
         playable = True,
-        menus = menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
+        menus = menus,
         target = kodi_link(action='play_video', url=apiurl(episode['Fichero'])),
     )
+
+def youtube_plugin(url):
+    if not url: return url
+    if 'youtube.com' not in url: return url
+
+    youtubecode = url.split('|')[0].split('=')[1]
+    return 'plugin://plugin.video.youtube/play/?video_id=' + youtubecode
 
 def mixed_episode_item(episode):
     reused = episode_item(episode)
@@ -641,7 +648,7 @@ def movie_item(movie):
         country = movie.get('Pais'),
         dateadded = movie.get('FechaAñadido'),
         imdbnumber = movie.get('IMDB_ID'),
-        trailer = movie.get('Trailer'), # TODO: Not working, needs local file, url given
+        trailer = youtube_plugin(movie.get("Trailer")),
         status = statusString(movie),
         mpaa = movie['Clasificacion'],
         # TODO: Unused:
