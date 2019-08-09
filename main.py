@@ -709,13 +709,13 @@ def mark_episode_seen(episode):
     with busy():
         categoriaSerie = 1
         result = api('Estadistica/updateEstadisticaUser', episode, categoriaSerie)
-        kodi_refresh()
+    kodi_refresh()
 
 def unmark_episode_seen(episode):
     with busy():
         categoriaSerie = 1
         result = api('Estadistica/clearEstadisticaUser', episode, categoriaSerie)
-        kodi_refresh()
+    kodi_refresh()
 
 def play_video(url):
     """
