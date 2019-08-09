@@ -390,7 +390,7 @@ def category_list():
 def movie_list():
     listing(
         title = _("Películas"),
-        items = api('Peliculas/listaCompleta'),
+        items = api('Peliculas/listaCompletaConEstadisticas'),
         item_processor = movie_item,
         content = 'movies',
         sortings = [
@@ -673,6 +673,9 @@ def movie_item(movie):
         lastplayed = '2000-01-01' if seen else '',
         path=apiurl(movie['Fichero']),
 
+        menus = [
+            menu_seen_movie(movie['Identificador'], seen),
+        ],
         isfolder = False,
         playable = True,
         target = kodi_link(action='play_video', url=apiurl(movie['Fichero'])),
@@ -725,6 +728,32 @@ def unmark_episode_seen(episode):
         result = api('Estadistica/clearEstadisticaUser', episode, serieCategory)
     kodi_refresh()
 
+def menu_seen_movie(movie, wasSet):
+    if wasSet:
+        return kodi_menu_item(
+            _('Marcar como NO vista'),
+            unmark_movie_seen,
+            movie=movie,
+        )
+
+    return kodi_menu_item(
+        _('Marcar como vista'),
+        mark_movie_seen,
+        movie=movie,
+    )
+
+def mark_movie_seen(movie):
+    with busy():
+        movieCategory = 2
+        result = api('Estadistica/updateEstadisticaUser', movie, movieCategory)
+    kodi_refresh()
+
+def unmark_movie_seen(movie):
+    with busy():
+        movieCategory = 2
+        result = api('Estadistica/clearEstadisticaUser', movie, movieCategory)
+    kodi_refresh()
+
 def play_video(url):
     """
     Play a video by the provided url.
@@ -749,6 +778,8 @@ entrypoints = [
     unfollow_serie,
     mark_episode_seen,
     unmark_episode_seen,
+    mark_movie_seen,
+    unmark_movie_seen,
 ]
 
 log('\nRunning {}'.format(" ".join(sys.argv)))
