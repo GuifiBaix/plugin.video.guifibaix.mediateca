@@ -12,11 +12,7 @@ standard_library.install_aliases()
 
 import sys
 import os
-try:
-    from urllib.parse import urlencode, parse_qsl, quote
-except ImportError:
-    from urllib import urlencode
-    from urlparse import parse_qsl, quote
+from urllib.parse import urlencode, parse_qsl, quote
 import xbmcgui
 import xbmcplugin
 import xbmcaddon
