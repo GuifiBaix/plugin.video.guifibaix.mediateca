@@ -715,14 +715,14 @@ def menu_seen_episode(episode, wasSet):
 
 def mark_episode_seen(episode):
     with busy():
-        categoriaSerie = 1
-        result = api('Estadistica/updateEstadisticaUser', episode, categoriaSerie)
+        serieCategory = 1
+        result = api('Estadistica/updateEstadisticaUser', episode, serieCategory)
     kodi_refresh()
 
 def unmark_episode_seen(episode):
     with busy():
-        categoriaSerie = 1
-        result = api('Estadistica/clearEstadisticaUser', episode, categoriaSerie)
+        serieCategory = 1
+        result = api('Estadistica/clearEstadisticaUser', episode, serieCategory)
     kodi_refresh()
 
 def play_video(url):
