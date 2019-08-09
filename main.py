@@ -704,12 +704,6 @@ def menu_seen_episode(episode, wasSet):
         mark_episode_seen,
         episode=episode,
     )
-   
-    return [
-        kodi_menu_item(
-            
-            label, action, episode=episode)
-    ]
 
 def mark_episode_seen(episode):
     with busy():
