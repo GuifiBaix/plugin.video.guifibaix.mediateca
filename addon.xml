@@ -32,9 +32,10 @@ provider-name="GuifiBaix SCCL">
   </assets>
   <news>
 v0.3 (unreleased)
-- Option to enable experimental features
 - New autentication method in Mediateca
+- Episodes seen status from Mediateca
 - Trailers work
+- Option to enable experimental features
 
 v0.2 (2019-08-07)
 - Added support for movies.

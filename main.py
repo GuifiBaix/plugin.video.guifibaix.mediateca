@@ -508,7 +508,9 @@ def serie_item(serie):
         imdbnumber = serie.get('IMDB_ID'),
         status = statusString(serie),
 
-        menus = menu_follow_serie(serie['IdSerie'], wasSet = serie.get('Subscribed')=='1'),
+        menus = [
+            menu_follow_serie(serie['IdSerie'], wasSet = serie.get('Subscribed')=='1'),
+        ],
         target = kodi_link(action='season_list', serie=serie['IdSerie']),
     )
 
@@ -549,7 +551,9 @@ def season_item(season):
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
 
-        menus = menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
+        menus = [
+            menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
+        ],
         target = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     )
 
@@ -566,11 +570,13 @@ def episode_item(episode):
     if tags: tags+='\n\n'
 
     label = _("{Temporada}x{Capitulo} - {Titulo}", **episode)
+    seen = episode.get("Visto",'0')!='0'
 
-    menus = ( []
-        + menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1')
-        + menu_seen_episode(episode['Identificador'], wasSet = episode.get("Visto",'0')!='0')
-    )
+    menus = [
+        menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
+        menu_seen_episode(episode['Identificador'], wasSet = seen),
+    ]
+
     return dict(
         label = label,
 
@@ -587,8 +593,8 @@ def episode_item(episode):
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = tags + episode['Sipnosis'], # Misspelled in db
-        playcount = 1 if episode.get('Visto')!='0' else 0,
-        watched = episode.get("Visto",'0') != '0',
+        playcount = 1 if seen else 0,
+        lastplayed = '2000-01-01' if seen else '',
         cast = l(episode, 'Reparto'),
         director = l(episode, 'Director'),
         studio = l(episode, 'Productora'),
@@ -597,6 +603,8 @@ def episode_item(episode):
         dateadded = episode.get('FechaAñadido'),
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
+
+        path=apiurl(episode['Fichero']),
 
         isfolder = False,
         playable = True,
@@ -665,12 +673,10 @@ def movie_item(movie):
 def menu_follow_serie(serie_id, wasSet):
     label = _('Abandonar serie') if wasSet else _('Seguir serie')
     action = 'unfollow_serie' if wasSet else 'follow_serie'
-    return [
-        (label, kodi_action(
-            action=action,
-            serie_id=serie_id,
-        )),
-    ]
+    return label, kodi_action(
+        action=action,
+        serie_id=serie_id,
+        )
 
 def follow_serie(serie_id):
     with busy():
@@ -682,23 +688,40 @@ def unfollow_serie(serie_id):
         status = api('Alertas/unsubscribeToSerie/', serie_id)
         kodi_refresh()
 
+def kodi_menu_item(label, callback, **kwds):
+    return label, kodi_action(action=callback.__name__, **kwds)
+
 def menu_seen_episode(episode, wasSet):
-    label = _('Marcar como NO visto') if wasSet else _('Marcar como visto')
-    action = unmark_episode_seen if wasSet else mark_episode_seen
-    return [
-        (label, kodi_action(
-            action=action.__name__,
+    if wasSet:
+        return kodi_menu_item(
+            _('Marcar como NO visto'),
+            unmark_episode_seen,
             episode=episode,
-        )),
+        )
+
+    return kodi_menu_item(
+        _('Marcar como visto'),
+        mark_episode_seen,
+        episode=episode,
+    )
+   
+    return [
+        kodi_menu_item(
+            
+            label, action, episode=episode)
     ]
 
 def mark_episode_seen(episode):
-    categoriaSerie = 1
-    result = api('Estadistica/updateEstadisticaUser', episode, categoriaSerie)
+    with busy():
+        categoriaSerie = 1
+        result = api('Estadistica/updateEstadisticaUser', episode, categoriaSerie)
+        kodi_refresh()
 
 def unmark_episode_seen(episode):
-    categoriaSerie = 1
-    result = api('Estadistica/clearEstadisticaUser', episode, categoriaSerie)
+    with busy():
+        categoriaSerie = 1
+        result = api('Estadistica/clearEstadisticaUser', episode, categoriaSerie)
+        kodi_refresh()
 
 def play_video(url):
     """
