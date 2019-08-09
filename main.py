@@ -460,6 +460,10 @@ def l(item, key):
     result = [x.strip() for x in string.split(',') ]
     return result
 
+def lfix(item, key):
+    "For fields that according specs should take a list but don't"
+    return ', '.join(l(item,key))
+
 
 def category_item(category):
     " Creates a category list item"
@@ -494,15 +498,16 @@ def serie_item(serie):
         rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
         mediatype = 'tvshow',
+        genre = lfix(serie, 'Generos'),
         year = int(serie['Año']),
         season = int(serie['Temporadas']),
         plot = tags + serie['Sipnosis'], # Misspelled in db
         #playcount = serie.get('VecesVisto'),
         cast = l(serie, 'Reparto'),
-        director = l(serie, 'Director'),
-        studio = l(serie, 'Productora'),
-        writer = l(serie, 'Guion'),
-        country = serie.get('Pais'),
+        director = lfix(serie, 'Director'),
+        studio = lfix(serie, 'Productora'),
+        writer = lfix(serie, 'Guion'),
+        country = lfix(serie, 'Pais'),
         dateadded = serie.get('FechaAñadido'),
         aired = serie.get('PrimeraEmision'),
         imdbnumber = serie.get('IMDB_ID'),
@@ -538,15 +543,16 @@ def season_item(season):
         rating = season['Rating'],
         tvshowtitle = season['Serie'],
         mediatype = 'season',
+        genre = lfix(season, 'Generos'),
         year = int(season['Año']),
         season = int(season['Temporadas']),
         plot = tags + season['Sipnosis'], # Misspelled in db
         #playcount = season.get('VecesVistoUsuario',0),
         cast = l(season, 'Reparto'),
-        director = l(season, 'Director'),
-        studio = l(season, 'Productora'),
-        writer = l(season, 'Guion'),
-        country = season.get('Pais'),
+        director = lfix(season, 'Director'),
+        studio = lfix(season, 'Productora'),
+        writer = lfix(season, 'Guion'),
+        country = lfix(season, 'Pais'),
         dateadded = season.get('FechaAñadido'),
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
@@ -589,6 +595,7 @@ def episode_item(episode):
         rating = episode['Rating'],
         tvshowtitle = episode['Serie'],
         mediatype = 'episode',
+        genre = lfix(episode, 'Generos'),
         year = int(episode['Año']),
         season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
@@ -596,10 +603,10 @@ def episode_item(episode):
         playcount = 1 if seen else 0,
         lastplayed = '2000-01-01' if seen else '',
         cast = l(episode, 'Reparto'),
-        director = l(episode, 'Director'),
-        studio = l(episode, 'Productora'),
-        writer = l(episode, 'Guion'),
-        country = episode.get('Pais'),
+        director = lfix(episode, 'Director'),
+        studio = lfix(episode, 'Productora'),
+        writer = lfix(episode, 'Guion'),
+        country = lfix(episode, 'Pais'),
         dateadded = episode.get('FechaAñadido'),
         imdbnumber = episode.get('IMDB_ID'),
         status = statusString(episode),
@@ -646,15 +653,15 @@ def movie_item(movie):
         title = movie['Titulo'],
         rating = movie['Rating'],
         mediatype = 'movie',
-        genre = ', '.join(l(movie, 'Generos')),
+        genre = lfix(movie, 'Generos'),
         year = int(movie['Año']),
         plot = movie['Sipnosis'], # Misspelled in db
         #playcount = movie.get('Visto'),
         cast = l(movie, 'Reparto'),
-        director = l(movie, 'Director'),
-        studio = l(movie, 'Productora'),
-        writer = l(movie, 'Guion'),
-        country = movie.get('Pais'),
+        director = lfix(movie, 'Director'),
+        studio = lfix(movie, 'Productora'),
+        writer = lfix(movie, 'Guion'),
+        country = lfix(movie, 'Pais'),
         dateadded = movie.get('FechaAñadido'),
         imdbnumber = movie.get('IMDB_ID'),
         trailer = youtube_plugin(movie.get("Trailer")),
