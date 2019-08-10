@@ -33,8 +33,9 @@ provider-name="GuifiBaix SCCL">
   <news>
 v0.3 (unreleased)
 - New autentication method in Mediateca
-- Episodes seen status from Mediateca
-- Trailers work
+- New Category: Pending episodes of followed series
+- Episodes and movies seen status from Mediateca
+- Trailers on youtube now work
 - Option to enable experimental features
 
 v0.2 (2019-08-07)
