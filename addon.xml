@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.guifibaix.mediateca"
-version="0.3.0"
+version="0.3.1"
 name="GuifiBaix Mediateca"
 provider-name="GuifiBaix SCCL">
 <requires>
@@ -31,6 +31,9 @@ provider-name="GuifiBaix SCCL">
 -->
   </assets>
   <news>
+v0.3.1 (2019-08-11)
+- Pending episode list now enabled by default
+
 v0.3 (2019-08-11)
 - New autentication method in Mediateca
 - New Category: Pending episodes of followed series
