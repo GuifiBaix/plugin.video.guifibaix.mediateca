@@ -281,7 +281,6 @@ categories = [
             "Para seguir una serie, "
             "usa el menu contextual con una pulsación larga."
         ),
-        disabled=addon.getSetting("experimental")!='true',
     ),
     dict(
         title=_("Series"),
