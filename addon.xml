@@ -31,10 +31,10 @@ provider-name="GuifiBaix SCCL">
 -->
   </assets>
   <news>
-v0.3 (unreleased)
+v0.3 (2019-08-11)
 - New autentication method in Mediateca
 - New Category: Pending episodes of followed series
-- Episodes and movies seen status from Mediateca
+- Mediateca seen status is displayed and changed from Kodi
 - Trailers on youtube now work
 - Option to enable experimental features
 
