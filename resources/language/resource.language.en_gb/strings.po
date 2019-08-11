@@ -33,6 +33,10 @@ msgid "Password"
 msgstr "Contraseña"
 
 msgctxt "#32014"
+msgid "Maximum pending episodes listing. Use 0 for all of them (slow)"
+msgstr "Límite para le listado de episodios pendientes. Use 0 para todos (lento)"
+
+msgctxt "#32015"
 msgid "Enable experimental features (at your own risk)"
 msgstr "Habiltar funcionalidades experimentales (bajo tu responsabilidad)"
 

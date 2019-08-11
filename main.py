@@ -433,7 +433,7 @@ def episode_list(serie, season):
     )
 
 def pending_list():
-    episodes = api('Series/pendingEpisodes/')
+    episodes = api('Series/pendingEpisodes/', 0, addon.getSetting('max_pending_episodes'))
     listing(
         title = _("Pending episodes"),
         items = episodes,
@@ -767,8 +767,8 @@ def play_video(url):
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
 entrypoints = [
-    series_list,
     category_list,
+    series_list,
     season_list,
     episode_list,
     movie_list,
