@@ -478,6 +478,23 @@ def category_item(category):
         target = kodi_link(action=category.pop('action')),
     )
 
+def commonSeries_metadata(data):
+    return dict(
+        rating = data['Rating'],
+        genre = lfix(data, 'Generos'),
+        year = int(data['Año']),
+        season = int(data['Temporadas']),
+        cast = l(data, 'Reparto'),
+        director = lfix(data, 'Director'),
+        studio = lfix(data, 'Productora'),
+        writer = lfix(data, 'Guion'),
+        country = lfix(data, 'Pais'),
+        status = statusString(data),
+        dateadded = data.get('FechaAñadido'),
+        aired = data.get('PrimeraEmision'),
+        imdbnumber = data.get('IMDB_ID'),
+    )
+
 def serie_item(serie):
     " Creates a serie list item"
 
@@ -490,6 +507,7 @@ def serie_item(serie):
     if tags: tags+='\n\n'
 
     return dict(
+        commonSeries_metadata(serie),
         label = serie['Serie'],
 
         thumb = apiurl(serie['Poster']),
@@ -498,22 +516,9 @@ def serie_item(serie):
 
         title = serie['Serie'],
         originaltitle = serie['Serie'],
-        rating = serie['Rating'],
         tvshowtitle = serie['Serie'],
         mediatype = 'tvshow',
-        genre = lfix(serie, 'Generos'),
-        year = int(serie['Año']),
-        season = int(serie['Temporadas']),
         plot = tags + serie['Sipnosis'], # Misspelled in db
-        cast = l(serie, 'Reparto'),
-        director = lfix(serie, 'Director'),
-        studio = lfix(serie, 'Productora'),
-        writer = lfix(serie, 'Guion'),
-        country = lfix(serie, 'Pais'),
-        dateadded = serie.get('FechaAñadido'),
-        aired = serie.get('PrimeraEmision'),
-        imdbnumber = serie.get('IMDB_ID'),
-        status = statusString(serie),
 
         menus = [
             menu_follow_serie(serie['IdSerie'], wasSet = serie.get('Subscribed')=='1'),
@@ -538,6 +543,7 @@ def season_item(season):
     ]+ menu_seen_season(season['IdSerie'], season['Temporada'])
 
     return dict(
+        commonSeries_metadata(season),
         label=title,
 
         thumb = apiurl(season['Poster']),
@@ -547,21 +553,9 @@ def season_item(season):
         title = title,
         originaltitle = ' - '.join([season['Serie'],title]),
         tagline = season['Serie'],
-        rating = season['Rating'],
         tvshowtitle = season['Serie'],
         mediatype = 'season',
-        genre = lfix(season, 'Generos'),
-        year = int(season['Año']),
-        season = int(season['Temporadas']),
         plot = tags + season['Sipnosis'], # Misspelled in db
-        cast = l(season, 'Reparto'),
-        director = lfix(season, 'Director'),
-        studio = lfix(season, 'Productora'),
-        writer = lfix(season, 'Guion'),
-        country = lfix(season, 'Pais'),
-        dateadded = season.get('FechaAñadido'),
-        imdbnumber = season.get('IMDB_ID'),
-        status = statusString(season),
 
         menus = menus,
         target = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
@@ -588,6 +582,7 @@ def episode_item(episode):
     ]+ menu_seen_season(episode['IdSerie'], episode['Temporada'])
 
     return dict(
+        commonSeries_metadata(episode),
         label = label,
 
         thumb = apiurl(episode['Poster']),
@@ -596,22 +591,10 @@ def episode_item(episode):
 
         title = label,
         originaltitle = episode['Titulo'],
-        rating = episode['Rating'],
         tvshowtitle = episode['Serie'],
         mediatype = 'episode',
-        genre = lfix(episode, 'Generos'),
-        year = int(episode['Año']),
-        season = int(episode['Temporadas']),
         episode = episode['Capitulo'],
         plot = tags + episode['Sipnosis'], # Misspelled in db
-        cast = l(episode, 'Reparto'),
-        director = lfix(episode, 'Director'),
-        studio = lfix(episode, 'Productora'),
-        writer = lfix(episode, 'Guion'),
-        country = lfix(episode, 'Pais'),
-        dateadded = episode.get('FechaAñadido'),
-        imdbnumber = episode.get('IMDB_ID'),
-        status = statusString(episode),
 
         playcount = 1 if seen else 0,
         lastplayed = '2000-01-01' if seen else '',
@@ -666,10 +649,10 @@ def movie_item(movie):
         studio = lfix(movie, 'Productora'),
         writer = lfix(movie, 'Guion'),
         country = lfix(movie, 'Pais'),
+        status = statusString(movie),
         dateadded = movie.get('FechaAñadido'),
         imdbnumber = movie.get('IMDB_ID'),
         trailer = youtube_plugin(movie.get("Trailer")),
-        status = statusString(movie),
         mpaa = movie['Clasificacion'],
 
         playcount = 1 if seen else 0,
