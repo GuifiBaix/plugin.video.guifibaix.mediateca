@@ -163,6 +163,9 @@ def kodi_action(**params):
 
     return 'XBMC.RunPlugin({})'.format(kodi_link(**params))
 
+def kodi_menu_item(label, callback, **kwds):
+    return label, kodi_action(action=callback.__name__, **kwds)
+
 def apiurl(unsafe):
     "Constructs an url to the Mediateca Api"
 
@@ -698,8 +701,6 @@ def unfollow_serie(serie_id):
         status = api('Alertas/unsubscribeToSerie/', serie_id)
         kodi_refresh()
 
-def kodi_menu_item(label, callback, **kwds):
-    return label, kodi_action(action=callback.__name__, **kwds)
 
 def menu_seen_episode(episode, wasSet):
     if wasSet:
