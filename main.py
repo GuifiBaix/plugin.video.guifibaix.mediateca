@@ -533,6 +533,9 @@ def season_item(season):
     if season.get("Subscribed")=='1': tags.append(_("[La sigues]"))
     tags = ' '.join(tags)
     if tags: tags+='\n\n'
+    menus = [
+        menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
+    ]+ menu_seen_season(season['IdSerie'], season['Temporada'])
 
     return dict(
         label=title,
@@ -560,9 +563,7 @@ def season_item(season):
         imdbnumber = season.get('IMDB_ID'),
         status = statusString(season),
 
-        menus = [
-            menu_follow_serie(season['IdSerie'], wasSet = season.get("Subscribed")=='1'),
-        ],
+        menus = menus,
         target = kodi_link(action='episode_list', serie=season['IdSerie'], season=season['Temporada'])
     )
 
@@ -584,7 +585,7 @@ def episode_item(episode):
     menus = [
         menu_follow_serie(episode['IdSerie'], wasSet = episode.get("Subscribed")=='1'),
         menu_seen_episode(episode['Identificador'], wasSet = seen),
-    ]
+    ]+ menu_seen_season(episode['IdSerie'], episode['Temporada'])
 
     return dict(
         label = label,
@@ -701,6 +702,21 @@ def unfollow_serie(serie_id):
         status = api('Alertas/unsubscribeToSerie/', serie_id)
         kodi_refresh()
 
+def menu_seen_season(serie_id, season):
+    return [
+        kodi_menu_item(
+            _('Marcar temporada NO vista'),
+            unmark_season_seen,
+            serie=serie_id,
+            season=season,
+        ),
+        kodi_menu_item(
+            _('Marcar temporada vista'),
+            mark_season_seen,
+            serie=serie_id,
+            season=season,
+        ),
+    ]
 
 def menu_seen_episode(episode, wasSet):
     if wasSet:
@@ -716,18 +732,6 @@ def menu_seen_episode(episode, wasSet):
         episode=episode,
     )
 
-def mark_episode_seen(episode):
-    with busy():
-        serieCategory = 1
-        result = api('Estadistica/updateEstadisticaUser', episode, serieCategory)
-    kodi_refresh()
-
-def unmark_episode_seen(episode):
-    with busy():
-        serieCategory = 1
-        result = api('Estadistica/clearEstadisticaUser', episode, serieCategory)
-    kodi_refresh()
-
 def menu_seen_movie(movie, wasSet):
     if wasSet:
         return kodi_menu_item(
@@ -741,6 +745,30 @@ def menu_seen_movie(movie, wasSet):
         mark_movie_seen,
         movie=movie,
     )
+
+def mark_season_seen(serie, season):
+    with busy():
+        serieCategory = 1
+        result = api('Estadistica/updateEstadisticaTemporadaUser', serie, season)
+    kodi_refresh()
+
+def unmark_season_seen(serie, season):
+    with busy():
+        serieCategory = 1
+        result = api('Estadistica/clearEstadisticaTemporadaUser', serie, season)
+    kodi_refresh()
+
+def mark_episode_seen(episode):
+    with busy():
+        serieCategory = 1
+        result = api('Estadistica/updateEstadisticaUser', episode, serieCategory)
+    kodi_refresh()
+
+def unmark_episode_seen(episode):
+    with busy():
+        serieCategory = 1
+        result = api('Estadistica/clearEstadisticaUser', episode, serieCategory)
+    kodi_refresh()
 
 def mark_movie_seen(movie):
     with busy():
@@ -776,6 +804,8 @@ entrypoints = [
     pending_list,
     follow_serie,
     unfollow_serie,
+    mark_season_seen,
+    unmark_season_seen,
     mark_episode_seen,
     unmark_episode_seen,
     mark_movie_seen,
