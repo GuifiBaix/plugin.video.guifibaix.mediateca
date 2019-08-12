@@ -813,7 +813,7 @@ def router(paramstring):
     dispatchers = { fun.__name__: fun for fun in entrypoints}
     dispatcher = dispatchers.get(action, None)
     if not dispatcher:
-        raise ValueError('Invalid action: {0}!'.format(action))
+        raise ValueError('Invalid entry point: {0}'.format(action))
     dispatcher(**params)
 
 if __name__ == '__main__':
