@@ -478,12 +478,11 @@ def category_item(category):
         target = kodi_link(action=category.pop('action')),
     )
 
-def commonSeries_metadata(data):
+def common_metadata(data):
     return dict(
         rating = data['Rating'],
         genre = lfix(data, 'Generos'),
         year = int(data['Año']),
-        season = int(data['Temporadas']),
         cast = l(data, 'Reparto'),
         director = lfix(data, 'Director'),
         studio = lfix(data, 'Productora'),
@@ -491,8 +490,14 @@ def commonSeries_metadata(data):
         country = lfix(data, 'Pais'),
         status = statusString(data),
         dateadded = data.get('FechaAñadido'),
-        aired = data.get('PrimeraEmision'),
         imdbnumber = data.get('IMDB_ID'),
+    )
+
+def commonSeries_metadata(data):
+    return dict(
+        common_metadata(data),
+        season = int(data['Temporadas']),
+        aired = data.get('PrimeraEmision'),
     )
 
 def serie_item(serie):
@@ -631,6 +636,7 @@ def movie_item(movie):
     seen = movie.get("Visto",'0')!='0'
 
     return dict(
+        common_metadata(),
         label=label,
 
         thumb = apiurl(movie['Poster']),
@@ -639,19 +645,9 @@ def movie_item(movie):
 
         title = movie['Titulo'],
         originaltitle = movie['Titulo'],
-        rating = movie['Rating'],
         mediatype = 'movie',
-        genre = lfix(movie, 'Generos'),
-        year = int(movie['Año']),
         plot = movie['Sipnosis'], # Misspelled in db
-        cast = l(movie, 'Reparto'),
-        director = lfix(movie, 'Director'),
-        studio = lfix(movie, 'Productora'),
-        writer = lfix(movie, 'Guion'),
-        country = lfix(movie, 'Pais'),
-        status = statusString(movie),
-        dateadded = movie.get('FechaAñadido'),
-        imdbnumber = movie.get('IMDB_ID'),
+
         trailer = youtube_plugin(movie.get("Trailer")),
         mpaa = movie['Clasificacion'],
 
