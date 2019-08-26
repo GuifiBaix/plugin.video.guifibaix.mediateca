@@ -348,7 +348,7 @@ def listing(title, items, item_processor, content='videos', sortings=[xbmcplugin
 
 def buildItem(data):
     """Guiven a dict with all the tags builds a kodi
-    GUI ListItem to be inserted in a containerA
+    GUI ListItem to be inserted in a container.
     Besides artwork and video info tags,
     also receives: label, menus, playable.
     isfolder and target should be consumed in 'listing'
@@ -482,14 +482,14 @@ def common_metadata(data):
     return dict(
         rating = data['Rating'],
         genre = lfix(data, 'Generos'),
-        year = int(data['Año']),
+        year = int(data['Any']),
         cast = l(data, 'Reparto'),
         director = lfix(data, 'Director'),
         studio = lfix(data, 'Productora'),
         writer = lfix(data, 'Guion'),
         country = lfix(data, 'Pais'),
         status = statusString(data),
-        dateadded = data.get('FechaAñadido'),
+        dateadded = data.get('FechaAnadido'),
         imdbnumber = data.get('IMDB_ID'),
     )
 
@@ -632,7 +632,7 @@ def movie_item(movie):
     if movie['MostrarEnListaCompleta'] != '1':
         return None
 
-    label = _("[{Año}] {Titulo}", **movie)
+    label = _("[{Any}] {Titulo}", **movie)
     seen = movie.get("Visto",'0')!='0'
 
     return dict(
