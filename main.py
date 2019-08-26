@@ -623,7 +623,7 @@ def mixed_episode_item(episode):
     return reused and dict(
         reused,
 
-        title = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
+        title = _("{Temporada}x{Capitulo} - {Titulo}", **episode),
         label = _("{Serie}\n{Temporada}x{Capitulo} - {Titulo}", **episode),
     )
 
