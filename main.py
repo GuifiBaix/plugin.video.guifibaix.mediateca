@@ -540,7 +540,7 @@ def season_item(season):
     title = _("Temporada {}", season['Temporada'])
 
     tags = []
-    if season.get("Subscribed")=='1': tags.append(_("[La sigues]"))
+    if season.get("Subscribed")=='1': tags.append(_("[Siguiendo] "))
     tags = ' '.join(tags)
     if tags: tags+='\n\n'
     menus = [
