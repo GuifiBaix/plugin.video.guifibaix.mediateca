@@ -31,8 +31,10 @@ provider-name="GuifiBaix SCCL">
 -->
   </assets>
   <news>
-v0.4.0 (unreleased)
+v0.4.0 (2019-09-04)
 - (un)marking full seasons as seen
+- adapt to renamed server tags
+- common metadata code extracted
 
 v0.3.1 (2019-08-11)
 - Pending episode list now enabled by default
